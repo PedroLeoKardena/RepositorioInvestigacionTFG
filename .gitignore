@@ -1,0 +1,7 @@
+# Ignorar carpetas de datos
+audios/
+datos_entrenamiento/
+datos_entrada.csv
+*.pkl
+*.m4a
+.virtual_documents/
