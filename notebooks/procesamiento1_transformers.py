@@ -162,7 +162,7 @@ def entrenar_modelo():
         zero_division=0                 
     ))
 
-    ruta_guardado_final = ruta_modelos / "modelo_final"
+    ruta_guardado_final = ruta_modelos / "modelo_basico_wav2vec2"
     trainer.save_model(str(ruta_guardado_final))
     feature_extractor.save_pretrained(str(ruta_guardado_final))
     
