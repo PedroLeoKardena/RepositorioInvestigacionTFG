@@ -1,5 +1,6 @@
 # Ignorar carpetas de datos
 audios/
+modelos_entrenados/
 datos_entrenamiento/
 datos_entrada.csv
 *.pkl
