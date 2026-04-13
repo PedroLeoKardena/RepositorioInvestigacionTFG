@@ -43,7 +43,7 @@ def procesar_dataset(ruta_csv, ruta_audios, ruta_salida):
     dataset = []
     for index, fila in df.iterrows():
         nombre_archivo = fila['nombre_archivo']
-        ruta_audio = os.path.join(ruta_audios, nombre_archivo)
+        ruta_audio = ruta_audios / nombre_archivo
 
         try:
             features = embedding_wav2vec2(ruta_audio)
