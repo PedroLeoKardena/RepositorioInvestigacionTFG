@@ -5,32 +5,35 @@ import torch
 import torch.nn as nn
 import os
 import gc
+import json
+from datetime import datetime
 
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import classification_report
 from datasets import Dataset
 from transformers import (
-    Wav2Vec2FeatureExtractor,
-    Wav2Vec2Model,
+    AutoFeatureExtractor, 
+    HubertModel,          
     TrainingArguments,
     Trainer
 )
 from pathlib import Path
 
-nombre_modelo = "facebook/wav2vec2-base-960h"
+# Usamos el modelo base de HuBERT de HuggingFace
+nombre_modelo = "facebook/hubert-base-ls960"
 
-class Wav2Vec2MultiTask(nn.Module):
+class HubertMultiTask(nn.Module):
     def __init__(self, nombre_modelo, num_labels_grupo, num_labels_caja):
         super().__init__()
-        self.wav2vec2 = Wav2Vec2Model.from_pretrained(nombre_modelo)
-        
-        hidden_size = self.wav2vec2.config.hidden_size
+        # Usamos HubertModel en lugar de Wav2Vec2Model
+        self.hubert = HubertModel.from_pretrained(nombre_modelo, use_safetensors=True)        
+        hidden_size = self.hubert.config.hidden_size
         
         self.classifier_grupo = nn.Linear(hidden_size, num_labels_grupo)
         self.classifier_caja = nn.Linear(hidden_size, num_labels_caja)
 
     def forward(self, input_values, **kwargs):
-        outputs = self.wav2vec2(input_values)
+        outputs = self.hubert(input_values)
         
         hidden_states = outputs.last_hidden_state
         pooled_output = hidden_states.mean(dim=1) 
@@ -59,9 +62,7 @@ def preprocesado_basico(ruta_audio, target_dfbs=-20.0):
     y, sr = librosa.load(ruta_audio, sr=16000, mono=True)
 
     rms = np.sqrt(np.mean(y**2))
-
     rms_objetivo = 10 ** (target_dfbs / 20.0)
-
     y_normalizado = y * (rms_objetivo / rms)
 
     pico_maximo = np.max(np.abs(y_normalizado))
@@ -71,7 +72,7 @@ def preprocesado_basico(ruta_audio, target_dfbs=-20.0):
     return y_normalizado, sr
 
 # Inicializamos el feature extractor
-feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(nombre_modelo)
+feature_extractor = AutoFeatureExtractor.from_pretrained(nombre_modelo)
 
 def preprocesar_batch(batch, ruta_audios):
     audio_arrays = []
@@ -155,17 +156,18 @@ def entrenar_modelo():
         train_fold_ds = train_fold_ds.remove_columns(['fold'])
         val_fold_ds = val_fold_ds.remove_columns(['fold'])
         
-        modelo_cv = Wav2Vec2MultiTask(nombre_modelo, num_labels_grupo, num_labels_caja)
+        modelo_cv = HubertMultiTask(nombre_modelo, num_labels_grupo, num_labels_caja)
         
         training_args_cv = TrainingArguments(
-            output_dir=str(ruta_modelos / f"fold_{fold_val}"),
+            output_dir=str(ruta_modelos / f"hubert_fold_{fold_val}"),
             eval_strategy="epoch",
-            save_strategy="epoch",
+            save_strategy="no",
             learning_rate=3e-5,
             per_device_train_batch_size=4, 
             per_device_eval_batch_size=4,
             gradient_accumulation_steps=2,
             num_train_epochs=3,
+            weight_decay=0.01,
             logging_steps=10,
             remove_unused_columns=False,
         )
@@ -215,16 +217,17 @@ def entrenar_modelo():
     print("Iniciando Entrenamiento Final del Modelo con TODOS los datos de Train...")
     train_final_ds = train_dataset.remove_columns(['fold'])
     
-    modelo_final = Wav2Vec2MultiTask(nombre_modelo, num_labels_grupo, num_labels_caja)
+    modelo_final = HubertMultiTask(nombre_modelo, num_labels_grupo, num_labels_caja)
 
     training_args_final = TrainingArguments(
-        output_dir=str(ruta_modelos / "entrenamiento_final_multitask"),
+        output_dir=str(ruta_modelos / "entrenamiento_final_multitask_hubert"),
         eval_strategy="no",
-        save_strategy="epoch",
+        save_strategy="no",
         learning_rate=3e-5,
         per_device_train_batch_size=4, 
         gradient_accumulation_steps=2,
         num_train_epochs=3, #Modificable numero de epochs
+        weight_decay=0.01,
         logging_steps=10,
         remove_unused_columns=False,
     )
@@ -257,20 +260,69 @@ def entrenar_modelo():
             preds_caja_list.append(pred_caja)
 
     print("\nReporte Final - GRUPO:\n")
-    print(classification_report(real_grupo_list, preds_grupo_list, target_names=le_grupo.classes_, zero_division=0))
+    reporte_grupo_str = classification_report(real_grupo_list, preds_grupo_list, target_names=le_grupo.classes_, zero_division=0)
+    reporte_grupo_dict = classification_report(real_grupo_list, preds_grupo_list, target_names=le_grupo.classes_, zero_division=0, output_dict=True)
+    print(reporte_grupo_str)
 
     print("\nReporte Final - CAJA TORÁCICA:\n")
     etiquetas_caja = np.arange(len(le_caja.classes_))
     
-    print(classification_report(
+    reporte_caja_str = classification_report(
         real_caja_list, 
         preds_caja_list, 
         labels=etiquetas_caja,           
         target_names=le_caja.classes_, 
         zero_division=0
-    ))
+    )
+    reporte_caja_dict = classification_report(
+        real_caja_list, 
+        preds_caja_list, 
+        labels=etiquetas_caja,           
+        target_names=le_caja.classes_, 
+        zero_division=0,
+        output_dict=True
+    )
+    print(reporte_caja_str)
     
-    ruta_guardado_final = ruta_modelos / "modelo_multitask_wav2vec2"
+    resultados = {
+        "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "modelo": nombre_modelo,
+        "hiperparametros": {
+            "learning_rate": training_args_final.learning_rate,
+            "per_device_train_batch_size": training_args_final.per_device_train_batch_size,
+            "gradient_accumulation_steps": training_args_final.gradient_accumulation_steps,
+            "num_train_epochs": training_args_final.num_train_epochs,
+            "weight_decay": training_args_final.weight_decay
+        },
+        "resultados_cv": {
+            "media_grupo": float(np.mean(cv_accuracies_grupo)),
+            "std_grupo": float(np.std(cv_accuracies_grupo)),
+            "media_caja": float(np.mean(cv_accuracies_caja)),
+            "std_caja": float(np.std(cv_accuracies_caja))
+        },
+        "reporte_final_grupo": reporte_grupo_dict,
+        "reporte_final_caja": reporte_caja_dict
+    }
+
+    ruta_log_dir = ruta_modelos / "resultados_json"
+    os.makedirs(ruta_log_dir, exist_ok=True)
+    ruta_log = ruta_log_dir / "registro_resultados.json"
+    
+    if ruta_log.exists():
+        with open(ruta_log, 'r', encoding='utf-8') as f:
+            log_historico = json.load(f)
+    else:
+        log_historico = []
+        
+    log_historico.append(resultados)
+    
+    with open(ruta_log, 'w', encoding='utf-8') as f:
+        json.dump(log_historico, f, indent=4, ensure_ascii=False)
+        
+    print(f"\nResultados e hiperparámetros guardados en: {ruta_log}")
+    # ---------------------------------------------------------
+    
+    ruta_guardado_final = ruta_modelos / "modelo_multitask_hubert"
     os.makedirs(ruta_guardado_final, exist_ok=True)
     
     torch.save(modelo_final.state_dict(), ruta_guardado_final / "pytorch_model.bin")
