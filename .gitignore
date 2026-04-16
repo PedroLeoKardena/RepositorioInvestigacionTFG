@@ -1,5 +1,6 @@
 # Ignorar carpetas de datos
 audios_originales/
+audios_chunks/
 audios_aumentados/
 modelos_entrenados/
 datos_entrenamiento/
@@ -7,3 +8,4 @@ datos_entrada.csv
 *.pkl
 *.m4a
 .virtual_documents/
+CLAUDE.md

@@ -6,24 +6,6 @@ import soundfile as sf
 import pandas as pd
 from pathlib import Path
 
-def preprocesado_basico(ruta_audio, target_dfbs=-20.0):
-    y, sr = librosa.load(ruta_audio, sr=16000, mono=True)
-
-    rms = np.sqrt(np.mean(y**2))
-
-    # Prevenir división por cero si el audio es silencio puro
-    if rms == 0:
-        return y, sr
-
-    rms_objetivo = 10 ** (target_dfbs / 20.0)
-    y_normalizado = y * (rms_objetivo / rms)
-
-    pico_maximo = np.max(np.abs(y_normalizado))
-    if pico_maximo > 1.0:
-        y_normalizado = y_normalizado / pico_maximo
-
-    return y_normalizado, sr
-
 def apply_augmentations(y, sr):
     augmentations = {}
     
@@ -57,8 +39,8 @@ def procesar_dataset_completo(ruta_input, ruta_output):
         nombre_base = os.path.splitext(archivo)[0]
         
         try:
-            # 1. Carga y preprocesado
-            y_base, sr = preprocesado_basico(ruta_completa)
+            # Los chunks ya están preprocesados: carga directa
+            y_base, sr = librosa.load(ruta_completa, sr=None)
             
             # Guardar la versión Original Preprocesada
             nombre_orig = f"{nombre_base}_original.wav"
@@ -86,8 +68,8 @@ def procesar_dataset_completo(ruta_input, ruta_output):
 
 def expandir_metadata_aumentada(ruta_base):
     ruta_entrenamiento = ruta_base / "datos_entrenamiento"
-    ruta_csv_train = ruta_entrenamiento / "metadata_train.csv"
-    ruta_csv_test = ruta_entrenamiento / "metadata_test.csv"
+    ruta_csv_train = ruta_entrenamiento / "metadata_train_chunked.csv"
+    ruta_csv_test = ruta_entrenamiento / "metadata_test_chunked.csv"
 
     try:
         df_train_orig = pd.read_csv(ruta_csv_train, sep=";")
@@ -125,7 +107,7 @@ def expandir_metadata_aumentada(ruta_base):
 
 if __name__ == "__main__":
     ruta_base = Path(__file__).resolve().parent.parent
-    RUTA_ENTRADA = ruta_base / "audios_originales"
+    RUTA_ENTRADA = ruta_base / "audios_chunks"
     RUTA_SALIDA = ruta_base / "audios_aumentados"
     
     print("--- 1. GENERANDO ARCHIVOS DE AUDIO AUMENTADOS ---")
