@@ -5,7 +5,7 @@ def verificar_lectura_audios():
     # Ruta del archivo CSV
     ruta_base = Path(__file__).resolve().parent.parent 
     ruta_csv = ruta_base / "datos_entrada.csv"
-    ruta_audios = ruta_base / "audios"
+    ruta_audios = ruta_base / "audios_originales"
 
     try:
         df = pd.read_csv(ruta_csv, encoding = "latin-1", sep="\t")

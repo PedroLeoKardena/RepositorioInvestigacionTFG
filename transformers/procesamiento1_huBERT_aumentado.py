@@ -12,27 +12,28 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import classification_report
 from datasets import Dataset
 from transformers import (
-    Wav2Vec2FeatureExtractor,
-    Wav2Vec2Model,
+    AutoFeatureExtractor, 
+    HubertModel,          
     TrainingArguments,
     Trainer
 )
 from pathlib import Path
 
-nombre_modelo = "facebook/wav2vec2-base-960h"
+# Usamos el modelo base de HuBERT de HuggingFace
+nombre_modelo = "facebook/hubert-base-ls960"
 
-class Wav2Vec2MultiTask(nn.Module):
+class HubertMultiTask(nn.Module):
     def __init__(self, nombre_modelo, num_labels_grupo, num_labels_caja):
         super().__init__()
-        self.wav2vec2 = Wav2Vec2Model.from_pretrained(nombre_modelo, use_safetensors=True)
-        
-        hidden_size = self.wav2vec2.config.hidden_size
+        # Usamos HubertModel en lugar de Wav2Vec2Model
+        self.hubert = HubertModel.from_pretrained(nombre_modelo, use_safetensors=True)        
+        hidden_size = self.hubert.config.hidden_size
         
         self.classifier_grupo = nn.Linear(hidden_size, num_labels_grupo)
         self.classifier_caja = nn.Linear(hidden_size, num_labels_caja)
 
     def forward(self, input_values, **kwargs):
-        outputs = self.wav2vec2(input_values)
+        outputs = self.hubert(input_values)
         
         hidden_states = outputs.last_hidden_state
         pooled_output = hidden_states.mean(dim=1) 
@@ -61,9 +62,7 @@ def preprocesado_basico(ruta_audio, target_dfbs=-20.0):
     y, sr = librosa.load(ruta_audio, sr=16000, mono=True)
 
     rms = np.sqrt(np.mean(y**2))
-
     rms_objetivo = 10 ** (target_dfbs / 20.0)
-
     y_normalizado = y * (rms_objetivo / rms)
 
     pico_maximo = np.max(np.abs(y_normalizado))
@@ -73,7 +72,7 @@ def preprocesado_basico(ruta_audio, target_dfbs=-20.0):
     return y_normalizado, sr
 
 # Inicializamos el feature extractor
-feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(nombre_modelo)
+feature_extractor = AutoFeatureExtractor.from_pretrained(nombre_modelo)
 
 def preprocesar_batch(batch, ruta_audios):
     audio_arrays = []
@@ -98,7 +97,7 @@ def preprocesar_batch(batch, ruta_audios):
 def entrenar_modelo():
     ruta_base = Path(__file__).resolve().parent.parent
     ruta_entrenamiento = ruta_base / "datos_entrenamiento"
-    ruta_audios = ruta_base / "audios_originales"
+    ruta_audios = ruta_base / "audios"
     ruta_modelos = ruta_base / "modelos_entrenados"
     
     ruta_csv_train = ruta_entrenamiento / "metadata_train.csv"
@@ -157,16 +156,10 @@ def entrenar_modelo():
         train_fold_ds = train_fold_ds.remove_columns(['fold'])
         val_fold_ds = val_fold_ds.remove_columns(['fold'])
         
-        modelo_cv = Wav2Vec2MultiTask(nombre_modelo, num_labels_grupo, num_labels_caja)
+        modelo_cv = HubertMultiTask(nombre_modelo, num_labels_grupo, num_labels_caja)
         
-        #Aumentar learning_rate significa que el modelo aprenderá más rápido, pero puede divergir (el modelo no aprende, el margen de error aumenta).
-        #Disminuir learning_rate significa que el modelo aprenderá más lento, pero puede converger (el modelo aprende correctamente).
-        #Aumentar num_train_epochs significa que el modelo aprenderá más, pero puede sobreajustarse.
-        #Disminuir num_train_epochs significa que el modelo aprenderá menos, pero puede subajustarse.
-        #Aumentar weight_decay significa que el modelo aprenderá menos, pero puede converger.
-        #Disminuir weight_decay significa que el modelo aprenderá más, pero puede sobreajustarse.
         training_args_cv = TrainingArguments(
-            output_dir=str(ruta_modelos / f"fold_{fold_val}"),
+            output_dir=str(ruta_modelos / f"hubert_fold_{fold_val}"),
             eval_strategy="epoch",
             save_strategy="no",
             learning_rate=5e-5,
@@ -224,25 +217,14 @@ def entrenar_modelo():
     print("Iniciando Entrenamiento Final del Modelo con TODOS los datos de Train...")
     train_final_ds = train_dataset.remove_columns(['fold'])
     
-    modelo_final = Wav2Vec2MultiTask(nombre_modelo, num_labels_grupo, num_labels_caja)
+    modelo_final = HubertMultiTask(nombre_modelo, num_labels_grupo, num_labels_caja)
 
-
-    #Para los hiperparámtros per_device_train_batch_size y gradient_accumulation_steps no
-    #solo debemos tener en cuenta la GPU disponible (VRAM), si no también el numero de datos del dataset. 
-    #Tener en cuenta que tenemos un total de 56 datos (entre val y train), un conjunto pequeño.
-    #De este modo, no podemos poner tampoco un valor muy elevado para el batch efectivo.
-    #Es por esto que vemos mejor tocar el valor de estos hiperparámetros, no solo para no jugar con la
-    #posibilidad de llegar al estado Out Of Memory, sino también por que no es necesario aumentar el tamaño
-    #del batch efectivo con tan pocos datos.
-    
-    #De este modo, si nosotros queremos tunar nuestros hiperparámetros deberemos centrarnos 
-    #sobretodo en el tuneo de: num_train_epochs, learning_rate y weight_decay.
     training_args_final = TrainingArguments(
-        output_dir=str(ruta_modelos / "entrenamiento_final_multitask"),
+        output_dir=str(ruta_modelos / "entrenamiento_final_multitask_hubert"),
         eval_strategy="no",
         save_strategy="no",
         learning_rate=5e-5,
-        per_device_train_batch_size=4,
+        per_device_train_batch_size=4, 
         gradient_accumulation_steps=2,
         num_train_epochs=10, #Modificable numero de epochs
         weight_decay=0.01,
@@ -340,7 +322,7 @@ def entrenar_modelo():
     print(f"\nResultados e hiperparámetros guardados en: {ruta_log}")
     # ---------------------------------------------------------
     
-    ruta_guardado_final = ruta_modelos / "modelo_multitask_wav2vec2"
+    ruta_guardado_final = ruta_modelos / "modelo_multitask_hubert"
     os.makedirs(ruta_guardado_final, exist_ok=True)
     
     torch.save(modelo_final.state_dict(), ruta_guardado_final / "pytorch_model.bin")

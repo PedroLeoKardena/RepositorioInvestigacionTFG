@@ -98,7 +98,7 @@ def preprocesar_batch(batch, ruta_audios):
 def entrenar_modelo():
     ruta_base = Path(__file__).resolve().parent.parent
     ruta_entrenamiento = ruta_base / "datos_entrenamiento"
-    ruta_audios = ruta_base / "audios_originales"
+    ruta_audios = ruta_base / "audios"
     ruta_modelos = ruta_base / "modelos_entrenados"
     
     ruta_csv_train = ruta_entrenamiento / "metadata_train.csv"

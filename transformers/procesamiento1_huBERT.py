@@ -97,7 +97,7 @@ def preprocesar_batch(batch, ruta_audios):
 def entrenar_modelo():
     ruta_base = Path(__file__).resolve().parent.parent
     ruta_entrenamiento = ruta_base / "datos_entrenamiento"
-    ruta_audios = ruta_base / "audios"
+    ruta_audios = ruta_base / "audios_originales"
     ruta_modelos = ruta_base / "modelos_entrenados"
     
     ruta_csv_train = ruta_entrenamiento / "metadata_train.csv"
@@ -162,11 +162,11 @@ def entrenar_modelo():
             output_dir=str(ruta_modelos / f"hubert_fold_{fold_val}"),
             eval_strategy="epoch",
             save_strategy="no",
-            learning_rate=3e-5,
+            learning_rate=5e-5,
             per_device_train_batch_size=4, 
             per_device_eval_batch_size=4,
             gradient_accumulation_steps=2,
-            num_train_epochs=3,
+            num_train_epochs=10,
             weight_decay=0.01,
             logging_steps=10,
             remove_unused_columns=False,
@@ -223,10 +223,10 @@ def entrenar_modelo():
         output_dir=str(ruta_modelos / "entrenamiento_final_multitask_hubert"),
         eval_strategy="no",
         save_strategy="no",
-        learning_rate=3e-5,
+        learning_rate=5e-5,
         per_device_train_batch_size=4, 
         gradient_accumulation_steps=2,
-        num_train_epochs=3, #Modificable numero de epochs
+        num_train_epochs=10, #Modificable numero de epochs
         weight_decay=0.01,
         logging_steps=10,
         remove_unused_columns=False,

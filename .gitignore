@@ -1,5 +1,6 @@
 # Ignorar carpetas de datos
-audios/
+audios_originales/
+audios_aumentados/
 modelos_entrenados/
 datos_entrenamiento/
 datos_entrada.csv
