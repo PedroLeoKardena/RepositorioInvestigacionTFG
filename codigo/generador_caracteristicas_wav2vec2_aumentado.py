@@ -67,13 +67,13 @@ def procesar_dataset(ruta_csv, ruta_audios, ruta_salida):
 if __name__ == "__main__":
     ruta_base = Path(__file__).resolve().parent.parent
     ruta_entrenamiento = ruta_base / "datos_entrenamiento"
-    ruta_audios = ruta_base / "audios_originales"
+    ruta_audios = ruta_base / "audios_aumentados"
 
-    ruta_salida_train = ruta_base / "datos_entrenamiento" / "train_embeddings_wav2vec2.pkl"
-    ruta_salida_test = ruta_base / "datos_entrenamiento" / "test_embeddings_wav2vec2.pkl"
+    ruta_salida_train = ruta_base / "datos_entrenamiento" / "train_embeddings_wav2vec2_aumentado.pkl"
+    ruta_salida_test = ruta_base / "datos_entrenamiento" / "test_embeddings_wav2vec2_aumentado.pkl"
 
-    ruta_csv_train = ruta_entrenamiento / "metadata_train.csv"
+    ruta_csv_train = ruta_entrenamiento / "metadata_train_aumentado.csv"
     procesar_dataset(ruta_csv_train, ruta_audios, ruta_salida_train)
 
-    ruta_csv_test = ruta_entrenamiento / "metadata_test.csv"
+    ruta_csv_test = ruta_entrenamiento / "metadata_test_aumentado.csv"
     procesar_dataset(ruta_csv_test, ruta_audios, ruta_salida_test)

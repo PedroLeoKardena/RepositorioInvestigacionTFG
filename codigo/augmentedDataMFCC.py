@@ -5,38 +5,6 @@ from pathlib import Path
 import numpy as np
 import warnings
 
-def preprocesado_basico(ruta_audio, target_dfbs=-20.0):
-    """
-    Para preprocesar el audio formato .m4a, vamos a llevar a cabo lo 4 siguientes pasos:
-        -Cargar el audio
-        -Convertir a mono
-        -Remuestrear a 16kHz
-        -Aplicar normalización RMS
-    Con esto ya podremos posteriormente extraer los coeficientes MFCCS.
-    """
-
-    #Conversión a mono y remuestreo a 16kHz.
-    #librosa.load delega la decodificación del.m4a a FFmpeg por debajo, lo que nos permite cargar el audio directamente en el formato deseado.
-    y, sr = librosa.load(ruta_audio, sr=16000, mono=True)
-
-    #Normalización RMS
-    #Para la normalización RMS, calculamos la energía media global usando NumPy:
-    rms = np.sqrt(np.mean(y**2))
-
-    # Convertimos nuestro objetivo en decibelios (dBFS) a una escala de amplitud lineal
-    rms_objetivo = 10 ** (target_dfbs / 20.0)
-
-    # Escalamos el tensor de audio original para que coincida con el RMS objetivo
-    y_normalizado = y * (rms_objetivo / rms)
-
-    #Si la ganancia RMS es demasiado alta, podríamos saturar el audio. Para evitar esto, limitamos la amplitud máxima a 1.0 (o -1.0 para el lado negativo):
-    pico_maximo = np.max(np.abs(y_normalizado))
-    if pico_maximo > 1.0:
-        y_normalizado = y_normalizado / pico_maximo
-
-    return y_normalizado, sr
-
-
 def extraccion_mfccs(y, sr, n_mfcc=30):
     """
     Para la extracción de los coeficientes MFCCS, utilizamos la función librosa.feature.mfcc.
@@ -79,7 +47,8 @@ def procesar_dataset(ruta_csv, ruta_audios):
         
         if ruta_audio_especifico.exists():
             try:
-                y_norm, sr = preprocesado_basico(ruta_audio_especifico)
+                # Los audios ya están preprocesados
+                y_norm, sr = librosa.load(ruta_audio_especifico, sr=None)
                 
                 mfccs = extraccion_mfccs(y_norm, sr)
                 
@@ -106,22 +75,22 @@ if __name__ == "__main__":
     warnings.filterwarnings("ignore")
     ruta_base = Path(__file__).resolve().parent.parent
     ruta_entrenamiento = ruta_base / "datos_entrenamiento"
-    ruta_audios = ruta_base / "audios_originales"
+    ruta_audios = ruta_base / "audios_aumentados"
     
-    ruta_csv_train = ruta_entrenamiento / "metadata_train.csv"
+    ruta_csv_train = ruta_entrenamiento / "metadata_train_aumentado.csv"
     datos_mfcc_train = procesar_dataset(ruta_csv_train, ruta_audios)
 
     if datos_mfcc_train:
-        ruta_dest_train = ruta_entrenamiento / "train_mfcc_basico1.pkl"
+        ruta_dest_train = ruta_entrenamiento / "train_mfcc_basico1_aumentado.pkl"
         with open(ruta_dest_train, 'wb') as f:
             pickle.dump(datos_mfcc_train, f)
         print(f"Datos MFCC entrenamiento guardados en: {ruta_dest_train}")
     
-    ruta_csv_test = ruta_entrenamiento / "metadata_test.csv"
+    ruta_csv_test = ruta_entrenamiento / "metadata_test_aumentado.csv"
     datos_mfcc_test = procesar_dataset(ruta_csv_test, ruta_audios)
 
     if datos_mfcc_test:
-        ruta_dest_test = ruta_entrenamiento / "test_mfcc_basico1.pkl"
+        ruta_dest_test = ruta_entrenamiento / "test_mfcc_basico1_aumentado.pkl"
         with open(ruta_dest_test, 'wb') as f:
             pickle.dump(datos_mfcc_test, f)
         print(f"Datos MFCC test guardados en: {ruta_dest_test}")
