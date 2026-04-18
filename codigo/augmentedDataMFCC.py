@@ -5,6 +5,10 @@ from pathlib import Path
 import numpy as np
 import warnings
 
+# Número de frames objetivo: chunk de 10s a sr=16000, hop_length=160, center=True
+# n_frames = 1 + (10 * 16000) // 160 = 1001
+TARGET_FRAMES = 1001
+
 def extraccion_mfccs(y, sr, n_mfcc=30):
     """
     Para la extracción de los coeficientes MFCCS, utilizamos la función librosa.feature.mfcc.
@@ -15,14 +19,22 @@ def extraccion_mfccs(y, sr, n_mfcc=30):
         -Saltos de 10 ms
     """
     mfccs = librosa.feature.mfcc(
-        y=y, 
-        sr=sr, 
+        y=y,
+        sr=sr,
         n_mfcc=n_mfcc,
         n_fft=512,
         win_length=400,
         hop_length=160,
         window='hann'
     )
+
+    # Padding/truncado para garantizar dimensionalidad uniforme entre augmentations.
+    # El time stretch reduce la duración del audio, generando menos frames que el original.
+    n_frames = mfccs.shape[1]
+    if n_frames < TARGET_FRAMES:
+        mfccs = np.pad(mfccs, ((0, 0), (0, TARGET_FRAMES - n_frames)), mode='constant')
+    elif n_frames > TARGET_FRAMES:
+        mfccs = mfccs[:, :TARGET_FRAMES]
 
     return mfccs
 
@@ -81,7 +93,7 @@ if __name__ == "__main__":
     datos_mfcc_train = procesar_dataset(ruta_csv_train, ruta_audios)
 
     if datos_mfcc_train:
-        ruta_dest_train = ruta_entrenamiento / "train_mfcc_basico1_aumentado.pkl"
+        ruta_dest_train = ruta_entrenamiento / "train_mfcc_chunked_aumentado.pkl"
         with open(ruta_dest_train, 'wb') as f:
             pickle.dump(datos_mfcc_train, f)
         print(f"Datos MFCC entrenamiento guardados en: {ruta_dest_train}")
@@ -90,7 +102,7 @@ if __name__ == "__main__":
     datos_mfcc_test = procesar_dataset(ruta_csv_test, ruta_audios)
 
     if datos_mfcc_test:
-        ruta_dest_test = ruta_entrenamiento / "test_mfcc_basico1_aumentado.pkl"
+        ruta_dest_test = ruta_entrenamiento / "test_mfcc_chunked_aumentado.pkl"
         with open(ruta_dest_test, 'wb') as f:
             pickle.dump(datos_mfcc_test, f)
         print(f"Datos MFCC test guardados en: {ruta_dest_test}")

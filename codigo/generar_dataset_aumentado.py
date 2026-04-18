@@ -9,17 +9,17 @@ from pathlib import Path
 def apply_augmentations(y, sr):
     augmentations = {}
     
-    # 1. Ruido Gaussiano
+    # Ruido Gaussiano
     ruido = np.random.randn(len(y))
     y_noise = y + 0.005 * ruido 
     augmentations['noise'] = y_noise
     
-    # 2. Pitch Shift (+/- 2 semitonos, simula distinta fisionomía)
+    # Pitch Shift (+/- 2 semitonos, simula distinta fisionomía)
     print("   -> Aplicando Pitch Shift...")
     y_pitch = librosa.effects.pitch_shift(y, sr=sr, n_steps=2.0)
     augmentations['pitch'] = y_pitch
     
-    # 3. Time Stretch (Simula taquipnea un 15% más rápida)
+    # Time Stretch (Simula taquipnea un 15% más rápida)
     print("   -> Aplicando Time Stretch...")
     y_stretch = librosa.effects.time_stretch(y, rate=1.15)
     augmentations['stretch'] = y_stretch
