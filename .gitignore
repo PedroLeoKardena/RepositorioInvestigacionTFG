@@ -2,6 +2,9 @@
 audios_originales/
 audios_chunks/
 audios_aumentados/
+audios_diarizados/
+audios_chunks_diarizados/
+audios_aumentados_diarizados/
 modelos_entrenados/
 datos_entrenamiento/
 datos_entrada.csv
@@ -9,3 +12,5 @@ datos_entrada.csv
 *.m4a
 .virtual_documents/
 CLAUDE.md
+workflow_diarizacion.md
+lista_instalaciones_env_audio.txt
