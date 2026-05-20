@@ -190,8 +190,9 @@ def entrenar_modelo():
     preds_grupo_list, preds_caja_list, real_grupo_list, real_caja_list = evaluar_por_batches(modelo_final, test_dataset, batch_size=4, device=device)
 
     print("\nReporte Final - GRUPO:\n")
-    reporte_grupo_str = classification_report(real_grupo_list, preds_grupo_list, target_names=le_grupo.classes_, zero_division=0)
-    reporte_grupo_dict = classification_report(real_grupo_list, preds_grupo_list, target_names=le_grupo.classes_, zero_division=0, output_dict=True)
+    etiquetas_grupo = np.arange(len(le_grupo.classes_))
+    reporte_grupo_str = classification_report(real_grupo_list, preds_grupo_list, labels=etiquetas_grupo, target_names=le_grupo.classes_, zero_division=0)
+    reporte_grupo_dict = classification_report(real_grupo_list, preds_grupo_list, labels=etiquetas_grupo, target_names=le_grupo.classes_, zero_division=0, output_dict=True)
     print(reporte_grupo_str)
 
     print("\nReporte Final - CAJA TORÁCICA:\n")

@@ -1,4 +1,5 @@
 # Ignorar carpetas de datos
+resultados/
 audios_originales/
 audios_chunks/
 audios_aumentados/

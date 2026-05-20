@@ -27,3 +27,4 @@ dependencies:
       - accelerate>=1.1.0
       - iterative-stratification
       - huggingface_hub
+      - mlflow
