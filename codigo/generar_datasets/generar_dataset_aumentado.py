@@ -106,7 +106,7 @@ def expandir_metadata_aumentada(ruta_base):
     print(f"Test original:  {len(df_test_orig)} audios -> Test expandido (Solo Original): {len(df_test_aug)} audios.")
 
 if __name__ == "__main__":
-    ruta_base = Path(__file__).resolve().parent.parent
+    ruta_base = Path(__file__).resolve().parent.parent.parent
     RUTA_ENTRADA = ruta_base / "audios_chunks"
     RUTA_SALIDA = ruta_base / "audios_aumentados"
     

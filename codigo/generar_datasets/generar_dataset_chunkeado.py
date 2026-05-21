@@ -40,6 +40,7 @@ def dividir_en_chunks(y, chunk_samples=CHUNK_SAMPLES, min_samples=MIN_CHUNK_SAMP
         fin = inicio + chunk_samples
         chunk = y[inicio:fin]
         if len(chunk) >= min_samples:
+            # Rellenar con ceros si el chunk es válido pero más corto que chunk_samples
             if len(chunk) < chunk_samples:
                 chunk = np.pad(chunk, (0, chunk_samples - len(chunk)))
             chunks.append(chunk)
@@ -47,17 +48,17 @@ def dividir_en_chunks(y, chunk_samples=CHUNK_SAMPLES, min_samples=MIN_CHUNK_SAMP
     return chunks
 
 
-def procesar_y_chunkear(ruta_audios_diarizados, ruta_salida_chunks):
+def procesar_y_chunkear(ruta_audios_originales, ruta_salida_chunks):
     if ruta_salida_chunks.exists():
         shutil.rmtree(ruta_salida_chunks)
         print(f"Carpeta existente eliminada: {ruta_salida_chunks}")
     ruta_salida_chunks.mkdir(parents=True)
 
     archivos = sorted([
-        f for f in ruta_audios_diarizados.iterdir()
+        f for f in ruta_audios_originales.iterdir()
         if f.suffix.lower() in {'.wav', '.m4a', '.mp3'}
     ])
-    print(f"Audios diarizados encontrados: {len(archivos)}\n")
+    print(f"Audios encontrados: {len(archivos)}\n")
 
     resumen = []
     for idx, ruta_audio in enumerate(archivos):
@@ -74,14 +75,14 @@ def procesar_y_chunkear(ruta_audios_diarizados, ruta_salida_chunks):
                 sf.write(ruta_salida_chunks / nombre_chunk, chunk, sr)
 
             print(f"   -> {duracion_s:.1f}s  |  {len(chunks)} chunks generados")
-            resumen.append({'nombre_stem': nombre_base, 'nombre_wav': ruta_audio.name, 'num_chunks': len(chunks), 'duracion_s': round(duracion_s, 1)})
+            resumen.append({'nombre_original': ruta_audio.name, 'num_chunks': len(chunks), 'duracion_s': round(duracion_s, 1)})
 
             del y, chunks
             gc.collect()
 
         except Exception as e:
             print(f"   -> ERROR: {e}")
-            resumen.append({'nombre_stem': nombre_base, 'nombre_wav': ruta_audio.name, 'num_chunks': 0, 'duracion_s': 0})
+            resumen.append({'nombre_original': ruta_audio.name, 'num_chunks': 0, 'duracion_s': 0})
 
     return resumen
 
@@ -89,19 +90,17 @@ def procesar_y_chunkear(ruta_audios_diarizados, ruta_salida_chunks):
 def generar_metadata_chunkeada(ruta_csv_original, ruta_salida_chunks, resumen_chunks):
     df = pd.read_csv(ruta_csv_original, sep=";", encoding="utf-8")
 
-    # Los archivos diarizados son .wav pero el metadata original referencia .m4a
-    # Mapeamos por stem (nombre sin extensión)
-    mapa_chunks = {r['nombre_stem']: r['num_chunks'] for r in resumen_chunks}
+    mapa_chunks = {r['nombre_original']: r['num_chunks'] for r in resumen_chunks}
 
     filas = []
     for _, row in df.iterrows():
         nombre_orig = row['nombre_archivo']
-        nombre_stem = Path(nombre_orig).stem
-        num_chunks = mapa_chunks.get(nombre_stem, 0)
+        nombre_base = Path(nombre_orig).stem
+        num_chunks = mapa_chunks.get(nombre_orig, 0)
 
         for i in range(num_chunks):
             nueva_fila = row.copy()
-            nueva_fila['nombre_archivo'] = f"{nombre_stem}_chunk{i:03d}.wav"
+            nueva_fila['nombre_archivo'] = f"{nombre_base}_chunk{i:03d}.wav"
             nueva_fila['chunk_id'] = i
             nueva_fila['audio_original'] = nombre_orig
             filas.append(nueva_fila)
@@ -110,18 +109,18 @@ def generar_metadata_chunkeada(ruta_csv_original, ruta_salida_chunks, resumen_ch
 
 
 if __name__ == "__main__":
-    ruta_base = Path(__file__).resolve().parent.parent
-    ruta_diarizados = ruta_base / "audios_diarizados"
-    ruta_chunks = ruta_base / "audios_chunks_diarizados"
+    ruta_base = Path(__file__).resolve().parent.parent.parent
+    ruta_originales = ruta_base / "audios_originales"
+    ruta_chunks = ruta_base / "audios_chunks"
     ruta_entrenamiento = ruta_base / "datos_entrenamiento"
 
-    print("=== PASO 1: CHUNKING DE AUDIOS DIARIZADOS ===")
-    resumen = procesar_y_chunkear(ruta_diarizados, ruta_chunks)
+    print("=== PASO 1: CHUNKING DE AUDIOS ORIGINALES ===")
+    resumen = procesar_y_chunkear(ruta_originales, ruta_chunks)
 
-    print("\n=== PASO 2: GENERANDO METADATOS CHUNKEADOS DIARIZADOS ===")
+    print("\n=== PASO 2: GENERANDO METADATOS CHUNKEADOS ===")
     for split, csv_entrada, csv_salida in [
-        ("train", "metadata_train.csv", "metadata_train_chunked_diarizado.csv"),
-        ("test",  "metadata_test.csv",  "metadata_test_chunked_diarizado.csv"),
+        ("train", "metadata_train.csv", "metadata_train_chunked.csv"),
+        ("test",  "metadata_test.csv",  "metadata_test_chunked.csv"),
     ]:
         ruta_csv_in = ruta_entrenamiento / csv_entrada
         if not ruta_csv_in.exists():

@@ -8,8 +8,8 @@ from pathlib import Path
 from pyannote.audio import Pipeline
 from huggingface_hub import get_token
 
-AUDIOS_DIR = Path(__file__).parent.parent / "audios_originales"
-OUTPUT_CSV = Path(__file__).parent.parent / "datos_entrenamiento" / "diarizacion_reporte.csv"
+AUDIOS_DIR = Path(__file__).parent.parent.parent / "audios_originales"
+OUTPUT_CSV = Path(__file__).parent.parent.parent / "datos_entrenamiento" / "diarizacion_reporte_completo.csv"
 SAMPLE_RATE = 16000
 TARGET_DBFS = -20.0
 

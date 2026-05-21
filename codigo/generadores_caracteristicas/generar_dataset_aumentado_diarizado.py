@@ -99,7 +99,7 @@ def expandir_metadata_aumentada(ruta_base):
 
 
 if __name__ == "__main__":
-    ruta_base = Path(__file__).resolve().parent.parent
+    ruta_base = Path(__file__).resolve().parent.parent.parent
     RUTA_ENTRADA = ruta_base / "audios_chunks_diarizados"
     RUTA_SALIDA = ruta_base / "audios_aumentados_diarizados"
 

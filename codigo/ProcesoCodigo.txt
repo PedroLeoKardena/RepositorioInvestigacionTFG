@@ -1,0 +1,9 @@
+Primero: Ejecutamos dividir_dataset.
+Segundo: Ejecutamos crear_audios_diarizados (no es realmente necesario dividir el dataset).
+Tercero: Generadores caracteristicas
+Cuarto: Generar datasets
+Quinto: GenerarMFCCs
+
+Cada archivo tiene nombre que representa que tipo de dataset genera.
+
+analisis_distribucion_chunks solo analiza, no genera nada. Solo analisis.
