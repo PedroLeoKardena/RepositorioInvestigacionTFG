@@ -11,8 +11,10 @@ def crear_divisiones():
     ruta_salida.mkdir(parents=True, exist_ok=True)
 
     try:
-        df = pd.read_csv(ruta_csv, encoding = "latin-1", sep=";")
+        df = pd.read_csv(ruta_csv, encoding = "latin-1", sep=",")
         print(f"Archivo CSV '{ruta_csv}' leído correctamente.")
+        #print(f"Cabeceras del DataFrame: {df.columns.tolist()}")
+        #print(f"Longitud del DataFrame: {len(df)}")
     except FileNotFoundError:
         print(f"Error: no se encontró la base de datos 'datos_entrada.csv'")
         return
@@ -39,8 +41,8 @@ def crear_divisiones():
         df_train.loc[val_idx, 'fold'] = fold_idx
 
     #Guardamos los resultados
-    df_train.to_csv(ruta_salida / "metadata_train.csv", index=False, sep=";")
-    df_test.to_csv(ruta_salida / "metadata_test.csv", index=False, sep=";")
+    df_train.to_csv(ruta_salida / "metadata_train.csv", index=False, sep=";", encoding="latin-1")
+    df_test.to_csv(ruta_salida / "metadata_test.csv", index=False, sep=";", encoding="latin-1")
     
     print(f"\nDivisión del dataset realizada correctamente (Estratificación Iterativa).")
     print(f"Tamaño del conjunto de entrenamiento: {len(df_train)}")

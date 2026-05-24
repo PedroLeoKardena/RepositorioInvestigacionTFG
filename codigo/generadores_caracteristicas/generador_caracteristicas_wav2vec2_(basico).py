@@ -39,7 +39,7 @@ def embedding_wav2vec2(ruta_audio):
     return embeddings
 
 def procesar_dataset(ruta_csv, ruta_audios, ruta_salida):
-    df = pd.read_csv(ruta_csv, sep=";")
+    df = pd.read_csv(ruta_csv, sep=";", encoding="utf-8")
     dataset = []
     for index, fila in df.iterrows():
         nombre_archivo = fila['nombre_archivo']

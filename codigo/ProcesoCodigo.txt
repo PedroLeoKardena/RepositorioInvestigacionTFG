@@ -1,8 +1,13 @@
 Primero: Ejecutamos dividir_dataset.
 Segundo: Ejecutamos crear_audios_diarizados (no es realmente necesario dividir el dataset).
+diarizacion_reporte -> diarizacion_extraccion 
+
 Tercero: Generadores caracteristicas
 Cuarto: Generar datasets
+Orden generación datasets: generar_dataset_chunkeado -> generar_dataset_chunkeado_aumentado -> generar_dataset_chunkeado_diarizado -> generar_dataset_chunkeado_aumentado_diarizado
+
 Quinto: GenerarMFCCs
+Orden generación MFCCS: aumentado -> chunkeado -> chunkeado_aumentado -> aumentado_diarizado
 
 Cada archivo tiene nombre que representa que tipo de dataset genera.
 
