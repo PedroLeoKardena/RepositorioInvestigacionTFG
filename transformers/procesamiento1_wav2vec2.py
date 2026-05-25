@@ -18,7 +18,7 @@ class Wav2Vec2BaselinePipeline(BaseTransformerPipeline):
     @property
     def csv_test(self): return "metadata_test_chunked.csv"
     @property
-    def nombre_run(self): return "Wav2Vec2_Chunk_Baseline_5epochs"
+    def nombre_run(self): return f"Wav2Vec2_Chunk_Baseline_{EPOCHS}epochs"
     @property
     def nombre_modelo_guardado(self): return "modelo_multitask_wav2vec2"
 

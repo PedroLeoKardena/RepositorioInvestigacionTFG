@@ -17,7 +17,7 @@ class HubertAugmentedDiarizadoPipeline(BaseTransformerPipeline):
     @property
     def csv_test(self): return "metadata_test_aumentado_diarizado.csv"
     @property
-    def nombre_run(self): return "HuBERT_Diarizado_Chunk_Augmented_5epochs"
+    def nombre_run(self): return f"HuBERT_Diarizado_Chunk_Augmented_{EPOCHS}epochs"
     @property
     def nombre_modelo_guardado(self): return "modelo_multitask_augmented_hubert_diarizado"
 

@@ -17,7 +17,7 @@ class HubertBaselinePipeline(BaseTransformerPipeline):
     @property
     def csv_test(self): return "metadata_test_chunked.csv"
     @property
-    def nombre_run(self): return "HuBERT_Chunk_Baseline_5epochs"
+    def nombre_run(self): return f"HuBERT_Chunk_Baseline_{EPOCHS}epochs"
     @property
     def nombre_modelo_guardado(self): return "modelo_multitask_hubert"
 

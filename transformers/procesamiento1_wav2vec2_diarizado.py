@@ -18,7 +18,7 @@ class Wav2Vec2DiarizadoPipeline(BaseTransformerPipeline):
     @property
     def csv_test(self): return "metadata_test_chunked_diarizado.csv"
     @property
-    def nombre_run(self): return "Wav2Vec2_Chunk_Diarizado_5epochs"
+    def nombre_run(self): return f"Wav2Vec2_Chunk_Diarizado_{EPOCHS}epochs"
     @property
     def nombre_modelo_guardado(self): return "modelo_multitask_wav2vec2_diarizado"
 
