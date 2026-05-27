@@ -6,6 +6,7 @@ BATCH_SIZE = 4
 GRAD_STEPS = 2
 EPOCHS = 5
 WEIGHT_DECAY = 0.01
+WARMUP_RATIO = 0.1
 
 class HubertAugmentedDiarizadoPipeline(BaseTransformerPipeline):
     @property
@@ -31,6 +32,8 @@ class HubertAugmentedDiarizadoPipeline(BaseTransformerPipeline):
     def epochs(self): return EPOCHS
     @property
     def weight_decay(self): return WEIGHT_DECAY
+    @property
+    def warmup_ratio(self): return WARMUP_RATIO
 
     def get_multitask_model(self, num_labels_grupo, num_labels_caja):
         return HubertMultiTask(self.nombre_modelo, num_labels_grupo, num_labels_caja)

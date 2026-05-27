@@ -6,6 +6,10 @@ import torch
 import torch.nn as nn
 import os
 import gc
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import confusion_matrix
 from abc import ABC, abstractmethod
 from pathlib import Path
 
@@ -25,6 +29,9 @@ class HubertMultiTask(nn.Module):
     def __init__(self, nombre_modelo, num_labels_grupo, num_labels_caja):
         super().__init__()
         self.hubert = HubertModel.from_pretrained(nombre_modelo, use_safetensors=True)
+        for param in self.hubert.feature_extractor.parameters():
+            param.requires_grad = False
+
         hidden_size = self.hubert.config.hidden_size
         self.classifier_grupo = nn.Linear(hidden_size, num_labels_grupo)
         self.classifier_caja = nn.Linear(hidden_size, num_labels_caja)
@@ -42,6 +49,9 @@ class Wav2Vec2MultiTask(nn.Module):
     def __init__(self, nombre_modelo, num_labels_grupo, num_labels_caja):
         super().__init__()
         self.wav2vec2 = Wav2Vec2Model.from_pretrained(nombre_modelo, use_safetensors=True)
+        for param in self.wav2vec2.feature_extractor.parameters():
+            param.requires_grad = False
+
         hidden_size = self.wav2vec2.config.hidden_size
         self.classifier_grupo = nn.Linear(hidden_size, num_labels_grupo)
         self.classifier_caja = nn.Linear(hidden_size, num_labels_caja)
@@ -102,6 +112,11 @@ class BaseTransformerPipeline(ABC):
     @property
     @abstractmethod
     def weight_decay(self) -> float:
+        pass
+
+    @property
+    @abstractmethod
+    def warmup_ratio(self) -> float:
         pass
 
     @property
@@ -168,6 +183,31 @@ class BaseTransformerPipeline(ABC):
 
         return preds_grupo, preds_caja, real_grupo, real_caja
 
+    def plot_confusion_matrix(self, real_grupo, preds_grupo, real_caja, preds_caja, clases_grupo, clases_caja):
+        fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+        fig.suptitle(f"Matrices de Confusión - {self.nombre_modelo_guardado}", fontsize=16, fontweight="bold")
+        
+        cm_grupo = confusion_matrix(real_grupo, preds_grupo)
+        sns.heatmap(cm_grupo, annot=True, fmt="d", cmap="Blues", ax=axes[0],xticklabels=clases_grupo, yticklabels=clases_grupo)
+        axes[0].set_title("Predicción: Grupo Clínico")
+        axes[0].set_ylabel("Etiqueta Real")
+        axes[0].set_xlabel("Predicción")
+        axes[0].tick_params(axis="x", rotation=45)
+        
+        cm_caja = confusion_matrix(real_caja, preds_caja)
+        sns.heatmap(cm_caja, annot=True, fmt="d", cmap="Greens", ax=axes[1],xticklabels=clases_caja, yticklabels=clases_caja)
+        axes[1].set_title("Predicción: Caja Torácica")
+        axes[1].set_ylabel("Etiqueta Real")
+        axes[1].set_xlabel("Predicción")
+        axes[1].tick_params(axis="x", rotation=45)
+        
+        plt.tight_layout()
+        
+        nombre_archivo_fig = f"confusion_matrix_{self.nombre_modelo_guardado}.png"
+        mlflow.log_figure(fig, nombre_archivo_fig)
+        
+        plt.close(fig)
+    
     def ejecutar(self):
         ruta_base = Path(__file__).resolve().parent.parent
         ruta_resultados = ruta_base / "resultados"
@@ -235,18 +275,14 @@ class BaseTransformerPipeline(ABC):
         )
 
         with mlflow.start_run(run_name=self.nombre_run):
-            LR = 3e-5
-            BATCH_SIZE = 4
-            GRAD_STEPS = 2
-            EPOCHS = 5
-            W_DECAY = 0.01
 
             mlflow.log_param("modelo", self.nombre_modelo)
-            mlflow.log_param("learning_rate", LR)
-            mlflow.log_param("batch_size", BATCH_SIZE)
-            mlflow.log_param("gradient_acc_steps", GRAD_STEPS)
-            mlflow.log_param("num_epochs", EPOCHS)
-            mlflow.log_param("weight_decay", W_DECAY)
+            mlflow.log_param("learning_rate", self.learning_rate)
+            mlflow.log_param("batch_size", self.batch_size)
+            mlflow.log_param("gradient_acc_steps", self.grad_steps)
+            mlflow.log_param("num_epochs", self.epochs)
+            mlflow.log_param("weight_decay", self.weight_decay)
+            mlflow.log_param("warmup_ratio", self.warmup_ratio)
 
             cv_accuracies_grupo = []
             cv_accuracies_caja = []
@@ -268,14 +304,16 @@ class BaseTransformerPipeline(ABC):
                     output_dir=output_dir_cv,
                     eval_strategy="epoch",
                     save_strategy="no",
-                    learning_rate=LR,
-                    per_device_train_batch_size=BATCH_SIZE,
-                    per_device_eval_batch_size=BATCH_SIZE,
-                    gradient_accumulation_steps=GRAD_STEPS,
-                    num_train_epochs=EPOCHS,
-                    weight_decay=W_DECAY,
+                    learning_rate=self.learning_rate,
+                    per_device_train_batch_size=self.batch_size,
+                    per_device_eval_batch_size=self.batch_size,
+                    gradient_accumulation_steps=self.grad_steps,
+                    num_train_epochs=self.epochs,
+                    weight_decay=self.weight_decay,
+                    warmup_ratio=self.warmup_ratio,
                     logging_steps=10,
                     remove_unused_columns=False,
+                    bf16=True
                 )
 
                 trainer_cv = MultiTaskTrainer(
@@ -319,13 +357,15 @@ class BaseTransformerPipeline(ABC):
                 output_dir=output_dir_final,
                 eval_strategy="no",
                 save_strategy="no",
-                learning_rate=LR,
-                per_device_train_batch_size=BATCH_SIZE,
-                gradient_accumulation_steps=GRAD_STEPS,
-                num_train_epochs=EPOCHS,
-                weight_decay=W_DECAY,
+                learning_rate=self.learning_rate,
+                per_device_train_batch_size=self.batch_size,
+                gradient_accumulation_steps=self.grad_steps,
+                num_train_epochs=self.epochs,
+                weight_decay=self.weight_decay,
+                warmup_ratio=self.warmup_ratio,
                 logging_steps=10,
                 remove_unused_columns=False,
+                bf16=True
             )
 
             trainer_final = MultiTaskTrainer(
@@ -377,6 +417,15 @@ class BaseTransformerPipeline(ABC):
 
             mlflow.log_dict(reporte_grupo_dict, "reporte_clasificacion_grupo.json")
             mlflow.log_dict(reporte_caja_dict, "reporte_clasificacion_caja.json")
+
+            self.plot_confusion_matrix(
+                real_grupo=real_grupo_list, 
+                preds_grupo=preds_grupo_list, 
+                clases_grupo=le_grupo.classes_,
+                real_caja=real_caja_list, 
+                preds_caja=preds_caja_list, 
+                clases_caja=le_caja.classes_
+            )
 
             ruta_guardado_final = ruta_modelos / self.nombre_modelo_guardado
             os.makedirs(ruta_guardado_final, exist_ok=True)
