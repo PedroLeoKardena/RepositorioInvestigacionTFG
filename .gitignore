@@ -15,3 +15,4 @@ datos_entrada.csv
 CLAUDE.md
 workflow_diarizacion.md
 lista_instalaciones_env_audio.txt
+__pycache__ 
