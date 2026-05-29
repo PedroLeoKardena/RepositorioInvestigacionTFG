@@ -1,7 +1,7 @@
-from pipeline_comun import PipelineComunCRNN
+from tune_pipeline_comun import PipelineComunCRNN
 
-pkl_train = "train_mfcc_chunked_aumentado_diarizado.pkl"
-pkl_test = "test_mfcc_chunked_aumentado_diarizado.pkl"
+pkl_train = "train_mfcc_chunked_diarizado.pkl"
+pkl_test = "test_mfcc_chunked_diarizado.pkl"
 #Hiperparámetros
 BATCH_SIZE = 16 #El batch size de los data loaders. https://docs.pytorch.org/tutorials/beginner/basics/data_tutorial.html
 HIDDEN_SIZE = 128 #El numero de neuronas en la capa oculta de la LSTM: https://docs.pytorch.org/docs/2.12/generated/torch.nn.LSTM.html
@@ -14,6 +14,7 @@ NUM_EPOCHS = 20 #Numero de epocas de entrenamiento.
 
 if __name__ == "__main__":
     pipeline = PipelineComunCRNN(
+        nombre_dataset="chunked_diarizado",
         pkl_train=pkl_train,
         pkl_test=pkl_test,
         batch_size=BATCH_SIZE,

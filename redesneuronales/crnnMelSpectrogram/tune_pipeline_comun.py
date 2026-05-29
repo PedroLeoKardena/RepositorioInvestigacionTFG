@@ -20,9 +20,9 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 
-from modelo_crnn import CRNN
+from redesneuronales.crnnMelSpectrogram.modelo_crnn import CRNN
 
-class DatasetMFCC(Dataset):
+class DatasetMelSpectrogram(Dataset):
     def __init__(self, df):
         self.df = df.reset_index(drop=True)
 
@@ -32,30 +32,36 @@ class DatasetMFCC(Dataset):
     def __getitem__(self, idx):
         fila = self.df.iloc[idx]
 
-        mfcc = fila['mfccs'] 
+        mels  = fila['mels'] 
         etiqueta_grupo = fila['label_grupo']
         etiqueta_caja = fila['label_caja']
        
-        tensor_mfcc = torch.tensor(mfcc, dtype=torch.float32)
+        tensor_mels = torch.tensor(mels, dtype=torch.float32)
         tensor_grupo = torch.tensor(etiqueta_grupo, dtype=torch.long)
         tensor_caja = torch.tensor(etiqueta_caja, dtype=torch.long)
 
-        if tensor_mfcc.shape[1] > 1000:
-            #Hay que tener en cuenta que librosa inserta, para un chunk de 10 segundos, con un hop_length de 160 y frecuencia de 16000 Hz, genera 1001 muestras temporales, ya que incluye el instante 0.
-            #Para este código no lo contamos
-            tensor_mfcc = tensor_mfcc[:, :1000]
-        elif tensor_mfcc.shape[1] < 1000:
-            tensor_mfcc = torch.nn.functional.pad(tensor_mfcc, (0, 1000 - tensor_mfcc.shape[1]))
+        if tensor_mels.shape[1] > 1000:
+            tensor_mels = tensor_mels[:, :1000]
+        elif tensor_mels.shape[1] < 1000:
+            pad_amount = 1000 - tensor_mels.shape[1]
+            valor_minimo = tensor_mels.min().item()
+            tensor_mels = torch.nn.functional.pad(tensor_mels, (0, pad_amount), value=valor_minimo)
 
-        #Esto lo hacemos es pasar de un tensor = [30,1000] a un tensor = [1,30,1000], donde 1 = canal_inicial
-        tensor_mfcc = tensor_mfcc.unsqueeze(0)
+        #Aplicamos normalización a los espectrogramas de Mel.
+        media = tensor_mels.mean()
+        std = tensor_mels.std()
+
+        tensor_mels = (tensor_mels - media) / (std + 1e-6)
+        #Esto lo hacemos es pasar de un tensor = [128,1000] a un tensor = [1,128,1000], donde 1 = canal_inicial
+        tensor_mels = tensor_mels.unsqueeze(0)
         
-        return tensor_mfcc, tensor_grupo, tensor_caja
+        return tensor_mels, tensor_grupo, tensor_caja
 
 class PipelineComunCRNN(ABC):
 
-    def __init__(self, pkl_train, pkl_test, hidden_size, batch_size, num_capas_ocultas_lstm, alpha_leaky_relu, is_bidirectional, dropout, lr_adam, num_epochs):
-        self.ruta_base = Path(__file__).resolve().parent.parent
+    def __init__(self, nombre_dataset, pkl_train, pkl_test, hidden_size, batch_size, num_capas_ocultas_lstm, alpha_leaky_relu, is_bidirectional, dropout, lr_adam, num_epochs):
+        self.ruta_base = Path(__file__).resolve().parent.parent.parent
+        self.nombre_dataset = nombre_dataset
         self.pkl_train = pkl_train
         self.pkl_test = pkl_test
         self.batch_size = batch_size
@@ -68,9 +74,7 @@ class PipelineComunCRNN(ABC):
         self.num_epochs = num_epochs
 
         tiempo_actual = pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
-        nombre_dataset = pkl_train.replace(".pkl", "")
-        nombre_dataset = nombre_dataset.replace("train_", "")
-        self.nombre_modelo_guardado = f"CRNN_MFCC_{nombre_dataset}_{tiempo_actual}"
+        self.nombre_modelo_guardado = f"CRNN_MelSpectrogram_{self.nombre_dataset}_{tiempo_actual}"
 
 
     def obtener_datasets(self):
@@ -122,7 +126,7 @@ class PipelineComunCRNN(ABC):
         print(f"Dispositivo detectado: {device}")
 
         mlflow.set_tracking_uri(f"sqlite:///{ruta_db.as_posix()}")
-        nombre_experimento = "Clasificacion_CRNN_MFCC"
+        nombre_experimento = "Clasificacion_CRNN_MelSpectrogram"
 
         experimento = mlflow.get_experiment_by_name(nombre_experimento)
         if experimento is None:
@@ -142,7 +146,10 @@ class PipelineComunCRNN(ABC):
         criterio_grupo = nn.CrossEntropyLoss()
         criterio_caja = nn.CrossEntropyLoss()
 
-        nombre_run = f"CRNN_MFCC_hidden{self.hidden_size}"
+        nombre_run = f"CRNN_MelSpectrogram_{self.nombre_dataset}_hidden{self.hidden_size}"
+        
+        cv_val_losses = []
+
         with mlflow.start_run(run_name = nombre_run):
 
             mlflow.log_param("hidden_size", self.hidden_size)
@@ -159,14 +166,16 @@ class PipelineComunCRNN(ABC):
                 df_train_fold = train_dataset[train_dataset['fold'] != fold_val]
                 df_val_fold = train_dataset[train_dataset['fold'] == fold_val]
 
-                train_loader = DataLoader(DatasetMFCC(df_train_fold), batch_size=self.batch_size, shuffle=True)
-                val_loader = DataLoader(DatasetMFCC(df_val_fold), batch_size=self.batch_size, shuffle=False)
+                train_loader = DataLoader(DatasetMelSpectrogram(df_train_fold), batch_size=self.batch_size, shuffle=True)
+                val_loader = DataLoader(DatasetMelSpectrogram(df_val_fold), batch_size=self.batch_size, shuffle=False)
 
-                modelo = CRNN(num_features=30, num_time_steps=1000, hidden_size=self.hidden_size, num_capas_ocultas_lstm=self.num_capas_ocultas_lstm, alpha_leaky_relu=self.alpha_leaky_relu, is_bidirectional=self.is_bidirectional, dropout=self.dropout)
+                modelo = CRNN(num_features=128, num_time_steps=1000, hidden_size=self.hidden_size, num_capas_ocultas_lstm=self.num_capas_ocultas_lstm, alpha_leaky_relu=self.alpha_leaky_relu, is_bidirectional=self.is_bidirectional, dropout=self.dropout)
                 modelo.to(device)
 
                 #Utilizaremos optimizer Adam.
                 optimizador = torch.optim.Adam(modelo.parameters(), lr=self.lr_adam)
+
+                mejor_val_loss_fold = float('inf')
 
                 for epoca in range(self.num_epochs):
                     modelo.train()
@@ -174,12 +183,12 @@ class PipelineComunCRNN(ABC):
                     loss_actual = 0.0
 
                     for i, data in enumerate(train_loader, 0):
-                        batch_mfcc, batch_grupo, batch_caja = data
-                        batch_mfcc, batch_grupo, batch_caja = batch_mfcc.to(device), batch_grupo.to(device), batch_caja.to(device)
+                        batch_mels, batch_grupo, batch_caja = data
+                        batch_mels, batch_grupo, batch_caja = batch_mels.to(device), batch_grupo.to(device), batch_caja.to(device)
 
                         optimizador.zero_grad()
 
-                        pred_grupo, pred_caja = modelo(batch_mfcc)
+                        pred_grupo, pred_caja = modelo(batch_mels)
                         
                         # El CRNN devuelve predicciones por time-step: (batch, seq_len, num_classes).
                         # Para clasificación por segmento usamos el último time-step.
@@ -206,12 +215,14 @@ class PipelineComunCRNN(ABC):
                     modelo.eval()
                     loss_val_total = 0.0
 
+                    correctos_grupo, correctos_caja, total_muestras = 0, 0, 0
+
                     with torch.no_grad():
                         for data in val_loader:
-                            batch_mfcc, batch_grupo, batch_caja = data
-                            batch_mfcc, batch_grupo, batch_caja = batch_mfcc.to(device), batch_grupo.to(device), batch_caja.to(device)
+                            batch_mels, batch_grupo, batch_caja = data
+                            batch_mels, batch_grupo, batch_caja = batch_mels.to(device), batch_grupo.to(device), batch_caja.to(device)
 
-                            pred_grupo, pred_caja = modelo(batch_mfcc)
+                            pred_grupo, pred_caja = modelo(batch_mels)
 
                             if pred_grupo.dim() == 3:
                                 pred_grupo = pred_grupo[:, -1, :]
@@ -222,17 +233,46 @@ class PipelineComunCRNN(ABC):
                             loss_total = loss_grupo + loss_caja
                             
                             loss_val_total += loss_total.item()
+                            
+                            clases_pred_grupo = torch.argmax(pred_grupo, dim=1)
+                            clases_pred_caja = torch.argmax(pred_caja, dim=1)
+                            
+                            correctos_grupo += (clases_pred_grupo == batch_grupo).sum().item()
+                            correctos_caja += (clases_pred_caja == batch_caja).sum().item()
+                            total_muestras += batch_grupo.size(0)
 
+                    acc_val_grupo = correctos_grupo / total_muestras
+                    acc_val_caja = correctos_caja / total_muestras
+                    
+                    mlflow.log_metric(f"fold_{fold_val}_val_acc_grupo", acc_val_grupo, step=epoca)
+                    mlflow.log_metric(f"fold_{fold_val}_val_acc_caja", acc_val_caja, step=epoca)
+                    
                     loss_val_media = loss_val_total / len(val_loader)
+                    if loss_val_media < mejor_val_loss_fold:
+                        mejor_val_loss_fold = loss_val_media
+
                     print(f"Época {epoca+1}/{self.num_epochs} | Train Loss: {loss_train_media:.4f} | Val Loss: {loss_val_media:.4f}")
                     mlflow.log_metric(f"fold_{fold_val}_train_loss", loss_train_media, step=epoca)
                     mlflow.log_metric(f"fold_{fold_val}_val_loss", loss_val_media, step=epoca)
-            
-            train_final_ds = train_dataset.drop(columns=['fold'])
-            train_final_loader = DataLoader(DatasetMFCC(train_final_ds), batch_size=self.batch_size, shuffle=True)
-            test_loader = DataLoader(DatasetMFCC(test_dataset), batch_size=self.batch_size, shuffle=False)
 
-            modelo_final = CRNN(num_features=30, num_time_steps=1000, hidden_size=self.hidden_size, num_capas_ocultas_lstm=self.num_capas_ocultas_lstm, alpha_leaky_relu=self.alpha_leaky_relu, is_bidirectional=self.is_bidirectional, dropout=self.dropout)
+
+                cv_val_losses.append(mejor_val_loss_fold)
+                
+                #TODO: eliminar delete cuando tengamos hiperparámetros finales
+
+                del modelo, optimizador
+                torch.cuda.empty_cache()
+                import gc
+                gc.collect()
+                        
+            mlflow.log_metric("cv_mean_val_loss", np.mean(cv_val_losses))
+            mlflow.log_metric("cv_std_val_loss", float(np.std(cv_val_losses)))
+
+            train_final_ds = train_dataset.drop(columns=['fold'])
+            train_final_loader = DataLoader(DatasetMelSpectrogram(train_final_ds), batch_size=self.batch_size, shuffle=True)
+            test_loader = DataLoader(DatasetMelSpectrogram(test_dataset), batch_size=self.batch_size, shuffle=False)
+
+            modelo_final = CRNN(num_features=128, num_time_steps=1000, hidden_size=self.hidden_size, num_capas_ocultas_lstm=self.num_capas_ocultas_lstm, alpha_leaky_relu=self.alpha_leaky_relu, is_bidirectional=self.is_bidirectional, dropout=self.dropout)
             modelo_final.to(device)
             optimizador_final = torch.optim.Adam(modelo_final.parameters(), lr=self.lr_adam)
 
@@ -241,11 +281,11 @@ class PipelineComunCRNN(ABC):
                 loss_train_total = 0.0
 
                 for i, data in enumerate(train_final_loader, 0):
-                    batch_mfcc, batch_grupo, batch_caja = data
-                    batch_mfcc, batch_grupo, batch_caja = batch_mfcc.to(device), batch_grupo.to(device), batch_caja.to(device)
+                    batch_mels, batch_grupo, batch_caja = data
+                    batch_mels, batch_grupo, batch_caja = batch_mels.to(device), batch_grupo.to(device), batch_caja.to(device)
 
                     optimizador_final.zero_grad()
-                    pred_grupo, pred_caja = modelo_final(batch_mfcc)
+                    pred_grupo, pred_caja = modelo_final(batch_mels)
 
                     if pred_grupo.dim() == 3:
                         pred_grupo = pred_grupo[:, -1, :]
@@ -262,6 +302,7 @@ class PipelineComunCRNN(ABC):
                 loss_train_media = loss_train_total / len(train_final_loader)
                 print(f"Época {epoca+1}/{self.num_epochs} | Train Loss: {loss_train_media:.4f}")
                 mlflow.log_metric("train_loss_final", loss_train_media, step=epoca)
+                
             
             modelo_final.eval()
 
@@ -270,12 +311,13 @@ class PipelineComunCRNN(ABC):
             etiquetas_grupo = []
             etiquetas_caja = []
 
+            
             with torch.no_grad():
                 for data in test_loader:
-                    batch_mfcc, batch_grupo, batch_caja = data
-                    batch_mfcc, batch_grupo, batch_caja = batch_mfcc.to(device), batch_grupo.to(device), batch_caja.to(device)
+                    batch_mels, batch_grupo, batch_caja = data
+                    batch_mels, batch_grupo, batch_caja = batch_mels.to(device), batch_grupo.to(device), batch_caja.to(device)
 
-                    pred_grupo, pred_caja = modelo_final(batch_mfcc)
+                    pred_grupo, pred_caja = modelo_final(batch_mels)
 
                     if pred_grupo.dim() == 3:
                         pred_grupo = pred_grupo[:, -1, :]
@@ -311,8 +353,8 @@ class PipelineComunCRNN(ABC):
 
             self.plot_confusion_matrix(etiquetas_grupo, preds_grupo, etiquetas_caja, preds_caja, le_grupo.classes_, le_caja.classes_)
 
-            nombre_ruta_modelo = f"modelo_crnn_mfcc_{self.nombre_modelo_guardado}.pth"
-            ruta_modelos = self.ruta_base / "modelos_entrenados" / "modelos_CRNN_MFCC"
+            nombre_ruta_modelo = f"modelo_crnn_melSpectrogram_{self.nombre_modelo_guardado}.pth"
+            ruta_modelos = self.ruta_base / "modelos_entrenados" / "modelos_CRNN_MelSpectrogram"
             os.makedirs(ruta_modelos, exist_ok=True)
 
             ruta_guardado_final = ruta_modelos / self.nombre_modelo_guardado

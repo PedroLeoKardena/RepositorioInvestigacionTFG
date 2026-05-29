@@ -1,15 +1,17 @@
 import os
-from base_pipeline import BaseTransformerPipeline, Wav2Vec2MultiTask
+from transformers.tune_base_pipeline import BaseTransformerPipeline, Wav2Vec2MultiTask
 from transformers import Wav2Vec2FeatureExtractor
 
-LR = 3e-5
+LR = 5e-5
 BATCH_SIZE = 4
-GRAD_STEPS = 2
-EPOCHS = 5
+GRAD_STEPS = 4
+EPOCHS = 8
 WEIGHT_DECAY = 0.01
 WARMUP_RATIO = 0.1
 
 class Wav2Vec2AugmentedPipeline(BaseTransformerPipeline):
+    @property
+    def nombre_dataset(self): return "Aumentado"
     @property
     def nombre_modelo(self): return "facebook/wav2vec2-base-960h"
     @property

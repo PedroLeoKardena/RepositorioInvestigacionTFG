@@ -1,14 +1,17 @@
 import os
-from base_pipeline import BaseTransformerPipeline, HubertMultiTask
+from transformers.tune_base_pipeline import BaseTransformerPipeline, HubertMultiTask
 
-LR = 3e-5
+LR = 5e-5
 BATCH_SIZE = 4
-GRAD_STEPS = 2
-EPOCHS = 5
+GRAD_STEPS = 4
+EPOCHS = 8
 WEIGHT_DECAY = 0.01
 WARMUP_RATIO = 0.1
 
 class HubertAugmentedPipeline(BaseTransformerPipeline):
+    
+    @property
+    def nombre_dataset(self): return "Aumentado"
     @property
     def nombre_modelo(self): return "facebook/hubert-base-ls960"
     @property

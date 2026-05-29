@@ -78,6 +78,10 @@ class MultiTaskTrainer(Trainer):
 
 
 class BaseTransformerPipeline(ABC):
+    @property
+    @abstractmethod
+    def nombre_dataset(self) -> str:
+        pass
 
     @property
     @abstractmethod
@@ -223,6 +227,7 @@ class BaseTransformerPipeline(ABC):
         if experimento is None:
             mlflow.create_experiment(nombre_experimento, artifact_location=ruta_mlruns.as_uri())
         mlflow.set_experiment(nombre_experimento)
+    
 
         ruta_entrenamiento = ruta_base / "datos_entrenamiento"
         ruta_audios = str(ruta_base / self.ruta_audios)
@@ -230,7 +235,7 @@ class BaseTransformerPipeline(ABC):
 
         ruta_csv_train = ruta_entrenamiento / self.csv_train
         ruta_csv_test = ruta_entrenamiento / self.csv_test
-
+        
         try:
             df_train = pd.read_csv(ruta_csv_train, sep=";")
             df_test = pd.read_csv(ruta_csv_test, sep=";")
@@ -256,6 +261,7 @@ class BaseTransformerPipeline(ABC):
         train_dataset = Dataset.from_pandas(df_train[['nombre_archivo', 'label_grupo', 'label_caja', 'fold']])
         test_dataset = Dataset.from_pandas(df_test[['nombre_archivo', 'label_grupo', 'label_caja']])
 
+    
         feature_extractor = self.get_feature_extractor()
 
         print("Preprocesando conjunto de entrenamiento...")
@@ -274,7 +280,10 @@ class BaseTransformerPipeline(ABC):
             remove_columns=['nombre_archivo']
         )
 
+        
+
         with mlflow.start_run(run_name=self.nombre_run):
+            
 
             mlflow.log_param("modelo", self.nombre_modelo)
             mlflow.log_param("learning_rate", self.learning_rate)
@@ -339,7 +348,8 @@ class BaseTransformerPipeline(ABC):
                 mlflow.log_metric(f"fold_{fold_val}_acc_caja", acc_caja)
 
                 print(f"Resultados Fold {fold_val} -> Accuracy Grupo: {acc_grupo:.4f} | Accuracy Caja: {acc_caja:.4f}")
-
+                
+                #TODO: eliminar delete cuando tengamos hiperparámetros finales
                 del trainer_cv, modelo_cv
                 torch.cuda.empty_cache()
                 gc.collect()
