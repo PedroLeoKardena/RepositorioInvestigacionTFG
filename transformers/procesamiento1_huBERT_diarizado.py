@@ -1,17 +1,18 @@
 import os
-from transformers.tune_base_pipeline import BaseTransformerPipeline, HubertMultiTask
+from tune_base_pipeline import BaseTransformerPipeline, HubertMultiTask
 
 LR = 5e-5
 BATCH_SIZE = 4
 GRAD_STEPS = 4
 EPOCHS = 8
 WEIGHT_DECAY = 0.01
-WARMUP_RATIO = 0.1
+WARMUP_STEPS = 100
 
 class HubertDiarizadoPipeline(BaseTransformerPipeline):
     @property
+    def max_audio_length(self): return 16000
+    @property
     def nombre_dataset(self): return "Diarizado"
-
     @property
     def nombre_modelo(self): return "facebook/hubert-base-ls960"
     @property
@@ -36,7 +37,7 @@ class HubertDiarizadoPipeline(BaseTransformerPipeline):
     @property
     def weight_decay(self): return WEIGHT_DECAY
     @property
-    def warmup_ratio(self): return WARMUP_RATIO
+    def warmup_steps(self): return WARMUP_STEPS
 
     def get_multitask_model(self, num_labels_grupo, num_labels_caja):
         return HubertMultiTask(self.nombre_modelo, num_labels_grupo, num_labels_caja)

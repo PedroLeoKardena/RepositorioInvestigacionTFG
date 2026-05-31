@@ -38,7 +38,7 @@ class CRNN(nn.Module):
 
 
     def construir_cnn_block(self, in_channels, num_caracteristicas, num_pasos_temporales, out_channels, alpha_leaky_relu):
-        assert num_pasos_temporales == 1000 or num_pasos_temporales % 250 == 0
+        assert num_pasos_temporales % 250 == 0
         assert num_caracteristicas == 30
         stride = (1,2) #Con este stride, el filtro se mueve 1 paso en la dirección de las características (filas) y 2 pasos en la dirección de los pasos temporales (columnas).
 
@@ -92,9 +92,10 @@ class CRNN(nn.Module):
         x = x.reshape(batch_size, tiempo, -1)
 
         resumen_temporal, _ = self.rnn(x)
+        contexto_global = resumen_temporal.mean(dim=1) 
 
-        prediccion_grupo = self.salida_grupo(resumen_temporal)
-        prediccion_clase = self.salida_clase(resumen_temporal)
+        prediccion_grupo = self.salida_grupo(contexto_global)
+        prediccion_clase = self.salida_clase(contexto_global)
 
         return prediccion_grupo, prediccion_clase
         

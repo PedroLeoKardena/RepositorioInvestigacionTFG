@@ -1,10 +1,10 @@
+import os
 import librosa
 import mlflow
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-import os
 import gc
 
 import matplotlib.pyplot as plt
@@ -21,10 +21,44 @@ from transformers import (
     AutoFeatureExtractor,
     HubertModel,
     Wav2Vec2Model,
+    WhisperModel,
     TrainingArguments,
     Trainer
 )
 
+class WhisperMultiTask(nn.Module):
+    def __init__(self, nombre_modelo, num_labels_grupo, num_labels_caja):
+        super().__init__()
+        self.whisper = WhisperModel.from_pretrained(nombre_modelo, use_safetensors=True, use_cache=False)
+
+        # Congelamos las primeras capas de convolucion extractoras:
+        for param in self.whisper.encoder.conv1.parameters():
+            param.requires_grad = False
+        for param in self.whisper.encoder.conv2.parameters():
+            param.requires_grad = False
+
+        # El tamaño oculto en Whisper se llama d_model
+        hidden_size = self.whisper.config.d_model
+        
+        self.classifier_grupo = nn.Linear(hidden_size, num_labels_grupo)
+        self.classifier_caja = nn.Linear(hidden_size, num_labels_caja)
+
+    def gradient_checkpointing_enable(self, **kwargs):
+        self.whisper.gradient_checkpointing_enable(**kwargs)
+
+
+    def forward(self, input_features, attention_mask=None, **kwargs):
+        #Pasamos los datos SOLO por el encoder, el decoder es para escritura
+        outputs = self.whisper.encoder(input_features, attention_mask=attention_mask)
+        
+        hidden_states = outputs.last_hidden_state
+        pooled_output = hidden_states.mean(dim=1)
+        
+        logits_grupo = self.classifier_grupo(pooled_output)
+        logits_caja = self.classifier_caja(pooled_output)
+        
+        return {"logits_grupo": logits_grupo, "logits_caja": logits_caja}
+    
 class HubertMultiTask(nn.Module):
     def __init__(self, nombre_modelo, num_labels_grupo, num_labels_caja):
         super().__init__()
@@ -35,6 +69,9 @@ class HubertMultiTask(nn.Module):
         hidden_size = self.hubert.config.hidden_size
         self.classifier_grupo = nn.Linear(hidden_size, num_labels_grupo)
         self.classifier_caja = nn.Linear(hidden_size, num_labels_caja)
+
+    #def gradient_checkpointing_enable(self, **kwargs):
+    #    self.hubert.gradient_checkpointing_enable(**kwargs)
 
     def forward(self, input_values, attention_mask=None, **kwargs):
         outputs = self.hubert(input_values, attention_mask=attention_mask)
@@ -56,6 +93,9 @@ class Wav2Vec2MultiTask(nn.Module):
         self.classifier_grupo = nn.Linear(hidden_size, num_labels_grupo)
         self.classifier_caja = nn.Linear(hidden_size, num_labels_caja)
 
+    #def gradient_checkpointing_enable(self, **kwargs):
+    #    self.wav2vec2.gradient_checkpointing_enable(**kwargs)
+
     def forward(self, input_values, attention_mask=None, **kwargs):
         outputs = self.wav2vec2(input_values, attention_mask=attention_mask)
         hidden_states = outputs.last_hidden_state
@@ -69,15 +109,30 @@ class MultiTaskTrainer(Trainer):
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
         labels_grupo = inputs.pop("labels_grupo")
         labels_caja = inputs.pop("labels_caja")
-        outputs = model(inputs["input_values"], attention_mask=inputs.get("attention_mask"))
+
+        audio_input = inputs.get("input_values") if "input_values" in inputs else inputs.get("input_features")
+        attention_mask = inputs.get("attention_mask")
+
+        outputs = model(audio_input, attention_mask=attention_mask)
+
         loss_fct = nn.CrossEntropyLoss()
         loss_grupo = loss_fct(outputs["logits_grupo"], labels_grupo)
         loss_caja = loss_fct(outputs["logits_caja"], labels_caja)
         loss = loss_grupo + loss_caja
+
         return (loss, outputs) if return_outputs else loss
 
 
 class BaseTransformerPipeline(ABC):
+    
+    #Este metodo lo creamos para manejar Whisper, el cual espera una entrada con 30000 pasos temporales, 
+    #mientras que nosotros le otorgamos una con 10000 pasos. Al devolver None en los pipelines de Whisper, el modelo aplicará padding
+    #de manera interna hasta alcanzar los pasos necesarios. En los demás dejamos el valor que tenemos: 16000 (Hz).  
+    @property
+    @abstractmethod
+    def max_audio_length(self):
+        pass
+
     @property
     @abstractmethod
     def nombre_dataset(self) -> str:
@@ -120,7 +175,7 @@ class BaseTransformerPipeline(ABC):
 
     @property
     @abstractmethod
-    def warmup_ratio(self) -> float:
+    def warmup_steps(self) -> int:
         pass
 
     @property
@@ -161,7 +216,7 @@ class BaseTransformerPipeline(ABC):
             audio_arrays,
             sampling_rate=16000,
             padding="max_length",
-            max_length=160000,
+            max_length=self.max_audio_length,
             truncation=True
         )
 
@@ -176,9 +231,13 @@ class BaseTransformerPipeline(ABC):
 
         with torch.no_grad():
             for batch in dataloader:
-                input_values = batch['input_values'].to(device)
+                if 'input_values' in batch:
+                    audio_input = batch['input_values'].to(device)
+                else:
+                    audio_input = batch['input_features'].to(device)
+                
                 attention_mask = batch['attention_mask'].to(device) if 'attention_mask' in batch else None
-                outputs = modelo(input_values, attention_mask=attention_mask)
+                outputs = modelo(audio_input, attention_mask=attention_mask)
                 preds_grupo.extend(torch.argmax(outputs['logits_grupo'], dim=-1).tolist())
                 preds_caja.extend(torch.argmax(outputs['logits_caja'], dim=-1).tolist())
 
@@ -291,7 +350,7 @@ class BaseTransformerPipeline(ABC):
             mlflow.log_param("gradient_acc_steps", self.grad_steps)
             mlflow.log_param("num_epochs", self.epochs)
             mlflow.log_param("weight_decay", self.weight_decay)
-            mlflow.log_param("warmup_ratio", self.warmup_ratio)
+            mlflow.log_param("warmup_steps", self.warmup_steps)
 
             cv_accuracies_grupo = []
             cv_accuracies_caja = []
@@ -308,22 +367,45 @@ class BaseTransformerPipeline(ABC):
                 modelo_cv = self.get_multitask_model(num_labels_grupo, num_labels_caja)
 
                 output_dir_cv = str(ruta_modelos / f"{self.nombre_modelo_guardado}_fold_{fold_val}")
+
+                if "whisper" in self.nombre_modelo:
+                    print("Creando training arguments para whisper")
+                    training_args_cv = TrainingArguments(
+                        output_dir=output_dir_cv,
+                        eval_strategy="epoch",
+                        save_strategy="no",
+                        learning_rate=self.learning_rate,
+                        per_device_train_batch_size=self.batch_size,
+                        per_device_eval_batch_size=self.batch_size,
+                        gradient_accumulation_steps=self.grad_steps,
+                        gradient_checkpointing=True,
+                        num_train_epochs=self.epochs,
+                        weight_decay=self.weight_decay,
+                        warmup_steps=self.warmup_steps,
+                        logging_steps=10,
+                        remove_unused_columns=False,
+                        report_to="none",
+                        bf16=True
+                    )
+                else:
+                    print("Creando training args para wav2vec2 o hubert")
+                    training_args_cv = TrainingArguments(
+                        output_dir=output_dir_cv,
+                        eval_strategy="epoch",
+                        save_strategy="no",
+                        learning_rate=self.learning_rate,
+                        per_device_train_batch_size=self.batch_size,
+                        per_device_eval_batch_size=self.batch_size,
+                        gradient_accumulation_steps=self.grad_steps,
+                        #gradient_checkpointing=True,
+                        num_train_epochs=self.epochs,
+                        weight_decay=self.weight_decay,
+                        warmup_steps=self.warmup_steps,
+                        logging_steps=10,
+                        remove_unused_columns=False,
+                        bf16=True
+                    )
                 
-                training_args_cv = TrainingArguments(
-                    output_dir=output_dir_cv,
-                    eval_strategy="epoch",
-                    save_strategy="no",
-                    learning_rate=self.learning_rate,
-                    per_device_train_batch_size=self.batch_size,
-                    per_device_eval_batch_size=self.batch_size,
-                    gradient_accumulation_steps=self.grad_steps,
-                    num_train_epochs=self.epochs,
-                    weight_decay=self.weight_decay,
-                    warmup_ratio=self.warmup_ratio,
-                    logging_steps=10,
-                    remove_unused_columns=False,
-                    bf16=True
-                )
 
                 trainer_cv = MultiTaskTrainer(
                     model=modelo_cv,
@@ -332,6 +414,7 @@ class BaseTransformerPipeline(ABC):
                     eval_dataset=val_fold_ds,
                 )
 
+                #print("Ejecutando .train().")
                 trainer_cv.train()
 
                 modelo_cv.eval()
@@ -362,21 +445,40 @@ class BaseTransformerPipeline(ABC):
 
             modelo_final = self.get_multitask_model(num_labels_grupo, num_labels_caja)
             output_dir_final = str(ruta_modelos / f"entrenamiento_final_{self.nombre_modelo_guardado}")
-
-            training_args_final = TrainingArguments(
-                output_dir=output_dir_final,
-                eval_strategy="no",
-                save_strategy="no",
-                learning_rate=self.learning_rate,
-                per_device_train_batch_size=self.batch_size,
-                gradient_accumulation_steps=self.grad_steps,
-                num_train_epochs=self.epochs,
-                weight_decay=self.weight_decay,
-                warmup_ratio=self.warmup_ratio,
-                logging_steps=10,
-                remove_unused_columns=False,
-                bf16=True
-            )
+            
+            if "whisper" in self.nombre_modelo:
+                training_args_final = TrainingArguments(
+                    output_dir=output_dir_final,
+                    eval_strategy="no",
+                    save_strategy="no",
+                    learning_rate=self.learning_rate,
+                    per_device_train_batch_size=self.batch_size,
+                    gradient_accumulation_steps=self.grad_steps,
+                    gradient_checkpointing=True,
+                    num_train_epochs=self.epochs,
+                    weight_decay=self.weight_decay,
+                    warmup_steps=self.warmup_steps,
+                    logging_steps=10,
+                    report_to="none",
+                    remove_unused_columns=False,
+                    bf16=True
+                )
+            else:
+                training_args_final = TrainingArguments(
+                    output_dir=output_dir_final,
+                    eval_strategy="no",
+                    save_strategy="no",
+                    learning_rate=self.learning_rate,
+                    per_device_train_batch_size=self.batch_size,
+                    gradient_accumulation_steps=self.grad_steps,
+                    #gradient_checkpointing=True,
+                    num_train_epochs=self.epochs,
+                    weight_decay=self.weight_decay,
+                    warmup_steps=self.warmup_steps,
+                    logging_steps=10,
+                    remove_unused_columns=False,
+                    bf16=True
+                )                
 
             trainer_final = MultiTaskTrainer(
                 model=modelo_final,
@@ -424,6 +526,14 @@ class BaseTransformerPipeline(ABC):
             mlflow.log_metric("cv_std_acc_caja", float(np.std(cv_accuracies_caja)))
             mlflow.log_metric("test_acc_grupo", reporte_grupo_dict["accuracy"])
             mlflow.log_metric("test_acc_caja", reporte_caja_dict["accuracy"])
+
+            mlflow.log_metric("test_f1_grupo", reporte_grupo_dict["weighted avg"]["f1-score"])
+            mlflow.log_metric("test_recall_grupo", reporte_grupo_dict["weighted avg"]["recall"])
+            mlflow.log_metric("test_precision_grupo", reporte_grupo_dict["weighted avg"]["precision"])
+            
+            mlflow.log_metric("test_f1_caja", reporte_caja_dict["weighted avg"]["f1-score"])
+            mlflow.log_metric("test_recall_caja", reporte_caja_dict["weighted avg"]["recall"])
+            mlflow.log_metric("test_precision_caja", reporte_caja_dict["weighted avg"]["precision"])
 
             mlflow.log_dict(reporte_grupo_dict, "reporte_clasificacion_grupo.json")
             mlflow.log_dict(reporte_caja_dict, "reporte_clasificacion_caja.json")

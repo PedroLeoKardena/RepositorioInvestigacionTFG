@@ -183,11 +183,10 @@ class PipelineComunCRNN(ABC):
 
                         pred_grupo, pred_caja = modelo(batch_mfcc)
                         
-                        # El CRNN devuelve predicciones por time-step: (batch, seq_len, num_classes).
-                        # Para clasificación por segmento usamos el último time-step.
-                        if pred_grupo.dim() == 3:
-                            pred_grupo = pred_grupo[:, -1, :]
-                            pred_caja = pred_caja[:, -1, :]
+                       
+                        #if pred_grupo.dim() == 3:
+                        #    pred_grupo = pred_grupo[:, -1, :]
+                        #    pred_caja = pred_caja[:, -1, :]
 
                         loss_grupo = criterio_grupo(pred_grupo, batch_grupo)
                         loss_caja = criterio_caja(pred_caja, batch_caja)
@@ -217,9 +216,9 @@ class PipelineComunCRNN(ABC):
 
                             pred_grupo, pred_caja = modelo(batch_mfcc)
 
-                            if pred_grupo.dim() == 3:
-                                pred_grupo = pred_grupo[:, -1, :]
-                                pred_caja = pred_caja[:, -1, :]
+                            #if pred_grupo.dim() == 3:
+                            #    pred_grupo = pred_grupo[:, -1, :]
+                            #    pred_caja = pred_caja[:, -1, :]
 
                             loss_grupo = criterio_grupo(pred_grupo, batch_grupo)
                             loss_caja = criterio_caja(pred_caja, batch_caja)
@@ -279,9 +278,9 @@ class PipelineComunCRNN(ABC):
                     optimizador_final.zero_grad()
                     pred_grupo, pred_caja = modelo_final(batch_mfcc)
 
-                    if pred_grupo.dim() == 3:
-                        pred_grupo = pred_grupo[:, -1, :]
-                        pred_caja = pred_caja[:, -1, :]
+                    #if pred_grupo.dim() == 3:
+                    #    pred_grupo = pred_grupo[:, -1, :]
+                    #    pred_caja = pred_caja[:, -1, :]
 
                     loss_grupo = criterio_grupo(pred_grupo, batch_grupo)
                     loss_caja = criterio_caja(pred_caja, batch_caja)
@@ -309,9 +308,9 @@ class PipelineComunCRNN(ABC):
 
                     pred_grupo, pred_caja = modelo_final(batch_mfcc)
 
-                    if pred_grupo.dim() == 3:
-                        pred_grupo = pred_grupo[:, -1, :]
-                        pred_caja = pred_caja[:, -1, :]
+                    #if pred_grupo.dim() == 3:
+                    #    pred_grupo = pred_grupo[:, -1, :]
+                    #    pred_caja = pred_caja[:, -1, :]
 
                     clases_pred_grupo = torch.argmax(pred_grupo, dim=1)
                     clases_pred_caja = torch.argmax(pred_caja, dim=1)
@@ -338,6 +337,16 @@ class PipelineComunCRNN(ABC):
 
             mlflow.log_metric("test_acc_grupo", reporte_grupo_dict["accuracy"])
             mlflow.log_metric("test_acc_caja", reporte_caja_dict["accuracy"])
+
+            mlflow.log_metric("test_f1_grupo", reporte_grupo_dict["weighted avg"]["f1-score"])
+            mlflow.log_metric("test_recall_grupo", reporte_grupo_dict["weighted avg"]["recall"])
+            mlflow.log_metric("test_precision_grupo", reporte_grupo_dict["weighted avg"]["precision"])
+            
+            # Métricas globales para Caja Torácica (Media ponderada)
+            mlflow.log_metric("test_f1_caja", reporte_caja_dict["weighted avg"]["f1-score"])
+            mlflow.log_metric("test_recall_caja", reporte_caja_dict["weighted avg"]["recall"])
+            mlflow.log_metric("test_precision_caja", reporte_caja_dict["weighted avg"]["precision"])
+
             mlflow.log_dict(reporte_grupo_dict, "reporte_clasificacion_grupo.json")
             mlflow.log_dict(reporte_caja_dict, "reporte_clasificacion_caja.json")
 
