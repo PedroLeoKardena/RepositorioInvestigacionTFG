@@ -11,14 +11,32 @@ pkl_test = "test_mels_chunked_diarizado.pkl"
 #DROPOUT = 0.0 #Añade una capa de dropout entra las capas del LSTM (DROPOUT = REGULARIZACION). https://docs.pytorch.org/docs/2.12/generated/torch.nn.LSTM.html
 #LR_ADAM = 0.001 #La tasa de aprendizaje para el optimizador Adam. https://docs.pytorch.org/docs/2.12/generated/torch.optim.Adam.html
 #NUM_EPOCHS = 20 #Numero de epocas de entrenamiento.
+
+"""
+Hiperparametros tuneo grupo: f1 = 0.8589392943239096
+hidden_size 256
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.01
+is_bidirectional True
+dropout 0.0
+num_epochs 50
+"""
+
+#Mantenemos Hidden_size y aumentamos num_epochs. Se podría probar a la siguiente a aumentar el LR_ADAM a 0.0005 o 0.001
+
+#Tambien aumentamos el dropout, ya que el val loss sube mientras que el train loss baja. Dropout es lo que permite trabajar en contra
+#del overfitting. Ponemos a 0.3
+
+
 BATCH_SIZE = 32
 HIDDEN_SIZE = 256 
 NUM_LAYERS_LSTM = 2
 ALPHA_LEAKY_RELU = 0.01
 IS_BIDIRECTIONAL = True 
-DROPOUT = 0.0 
+DROPOUT = 0.3
 LR_ADAM = 0.0001 
-NUM_EPOCHS = 50 
+NUM_EPOCHS = 75
 
 if __name__ == "__main__":
     pipeline = PipelineComunCRNN(

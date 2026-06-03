@@ -1,12 +1,28 @@
 import os
 from tune_base_pipeline import BaseTransformerPipeline, HubertMultiTask
 
+"""
+Hiperparámtros grupo:
+test_f1_grupo 0.752896174863388
+test_recall_grupo 0.83
+test_precision_grupo 0.6889
+
+learning_rate 5e-05
+batch_size 4
+gradient_acc_steps 4
+num_epochs 8
+weight_decay 0.01
+warmup_steps 100
+"""
+
+#Vamos a probar a bajar el valor de learning_rate a 3e-05, aumentamos valor de epochs. Dejamos mismo numero de wamup_steps.
+#Siguiente puede ser probar a aumentar weitght_decay a 0.05 o warmup_steps a 250.
 LR = 3e-5
 BATCH_SIZE = 4
 GRAD_STEPS = 4
 EPOCHS = 10
-WEIGHT_DECAY = 0.05
-WARMUP_STEPS = 250
+WEIGHT_DECAY = 0.01
+WARMUP_STEPS = 100
 
 class HubertAugmentedDiarizadoPipeline(BaseTransformerPipeline):
     @property

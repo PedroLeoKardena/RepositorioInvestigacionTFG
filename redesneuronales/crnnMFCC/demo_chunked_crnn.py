@@ -2,14 +2,27 @@ from tune_pipeline_comun import PipelineComunCRNN
 
 pkl_train = "train_mfcc_chunked.pkl"
 pkl_test = "test_mfcc_chunked.pkl"
-#Hiperparámetros
+
+"""Hiperparametros tuneo caja: f1 = 0.5619249651086559
+hidde_size 256 
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.01
+is_bidirectional True
+dropout 0.0
+num_epochs 50
+"""
+
+#Hiperparámetros. Dejamos el numero de epochs igual que antes y aumentamos dropout para intentar mejorar el val_loss.
+#Aumentamos tambien el LR_adam a 0.0005. A la siguiente buscamos aumentar el hidden_size.
+
 BATCH_SIZE = 32
 HIDDEN_SIZE = 256
 NUM_LAYERS_LSTM = 2
 ALPHA_LEAKY_RELU = 0.01
 IS_BIDIRECTIONAL = True 
-DROPOUT = 0.0 
-LR_ADAM = 0.0001 
+DROPOUT = 0.3 
+LR_ADAM = 0.0005 
 NUM_EPOCHS = 50
 
 if __name__ == "__main__":

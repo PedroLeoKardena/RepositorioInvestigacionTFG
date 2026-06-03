@@ -2,7 +2,19 @@ import os
 from tune_base_pipeline import BaseTransformerPipeline, Wav2Vec2MultiTask
 from transformers import Wav2Vec2FeatureExtractor
 
-LR = 5e-5
+"""
+Hiperparámetros grupo: f1 = 0.752896174863388
+learning_rate 5e-05
+batch_size 4
+gradient_acc_steps 4
+num_epochs 8
+weight_decay 0.01
+warmup_steps 100
+"""
+
+
+#Bajamos el valor de LR y dejamos los demas ugual. A la siguiente probar a aumentar numero de epochs y numero warmup_steps.
+LR = 3e-5
 BATCH_SIZE = 4
 GRAD_STEPS = 4
 EPOCHS = 8
