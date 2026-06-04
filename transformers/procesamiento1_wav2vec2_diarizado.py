@@ -10,16 +10,41 @@ gradient_acc_steps 4
 num_epochs 8
 weight_decay 0.01
 warmup_steps 100
+
+Post-Tuneo f1 = 0.752896174863388. Resultado identico.
+
+learning_rate 3e-05
+batch_size 4
+gradient_acc_steps 4
+num_epochs 8
+weight_decay 0.01
+warmup_steps 100
+
+Vamos a probar a solo subir los warmup_steps.
+
+Post-Tuneo 2: 0.752896174863388. Idéntico:
+learning_rate 3e-05
+batch_size 4
+gradient_acc_steps 4
+num_epochs 8
+weight_decay 0.01
+warmup_steps 250
+
+En este caso, a probar a bajar el learning_rate a 2e-05. 
+
+Post-Tuneo 3: 0.752896174863388. Idéntico.
+
+No vamos a tunear más este modelo, ya que no parece que los cambios en los hiperparámetros estén afectando al resultado.
 """
 
 
 #Bajamos el valor de LR y dejamos los demas ugual. A la siguiente probar a aumentar numero de epochs y numero warmup_steps.
-LR = 3e-5
+LR = 2e-5
 BATCH_SIZE = 4
 GRAD_STEPS = 4
 EPOCHS = 8
 WEIGHT_DECAY = 0.01
-WARMUP_STEPS = 100
+WARMUP_STEPS = 250
 
 class Wav2Vec2DiarizadoPipeline(BaseTransformerPipeline):
     @property

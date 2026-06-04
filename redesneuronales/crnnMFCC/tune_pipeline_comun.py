@@ -150,6 +150,7 @@ class PipelineComunCRNN(ABC):
             mlflow.log_param("is_bidirectional", self.is_bidirectional)
             mlflow.log_param("dropout", self.dropout)
             mlflow.log_param("num_epochs", self.num_epochs)
+            mlflow.log_param("lr_adam", self.lr_adam)
 
             cv_val_losses = []
 

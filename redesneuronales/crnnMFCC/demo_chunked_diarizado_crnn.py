@@ -21,17 +21,30 @@ alpha_leaky_relu 0.01
 is_bidirectional False
 dropout 0.0
 num_epochs 20
+
+Post-Tuneo: f1 grupo = 0.7846164874551971
+
+hidden_size 128
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.01
+is_bidirectional True
+dropout 0.3
+lr_adam 0.0005
+num_epochs 50
+
+#Vamos a subir el numero de capas ocultas a 256, vamos a probar LR_adam a 0.001 y lo demas igual
 """
 
 #En este caso, lo que sucede es que tambien hay subida del val_loss. Vamos a dejar el numero de hidden_size, aumentar el batch_size a 32.
 #Luego aumentamos el dropout a 0.3. Aumentamos el num_epochs de 20 a 50. LR_adam lo pasamos de 0.001 a 0.0005
 BATCH_SIZE = 32
-HIDDEN_SIZE = 128
+HIDDEN_SIZE = 256
 NUM_LAYERS_LSTM = 2
 ALPHA_LEAKY_RELU = 0.01
 IS_BIDIRECTIONAL = True 
 DROPOUT = 0.3
-LR_ADAM = 0.0005
+LR_ADAM = 0.001
 NUM_EPOCHS = 50
 
 if __name__ == "__main__":

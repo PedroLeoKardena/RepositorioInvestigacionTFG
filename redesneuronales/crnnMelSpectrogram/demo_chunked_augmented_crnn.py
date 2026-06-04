@@ -12,6 +12,18 @@ alpha_leaky_relu 0.01
 is_bidirectional True
 dropout 0.0
 num_epochs 50
+
+Post-Tuneo 1: f1 = 0.5572777502536105. Ha empeorado:
+hidden_size 256
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.01
+is_bidirectional True
+dropout 0.3
+LR_ADAM = 0.0005
+num_epochs 75
+
+#Vamos a probar a bajar el numero de epochs a 50, mismo dropout, mismo hiddent_size, distinto LR_ADAM -> Subimos a 0.001
 """
 
 #En este caso, se acerca bastante a los hiperparámetros de base, pero mejor. Vamos a probar a aumentar el LR a 0.0005 y aumentar
@@ -24,8 +36,8 @@ NUM_LAYERS_LSTM = 2
 ALPHA_LEAKY_RELU = 0.01
 IS_BIDIRECTIONAL = True 
 DROPOUT = 0.3
-LR_ADAM = 0.0005 
-NUM_EPOCHS = 75 
+LR_ADAM = 0.001
+NUM_EPOCHS = 50 
 
 if __name__ == "__main__":
     pipeline = PipelineComunCRNN(
