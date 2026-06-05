@@ -34,6 +34,20 @@ num_epochs 75
 lr_adam 0.0001
 
 #Vemos que ha empeorado al subir el número de epochs y establecer cierto valor de dropout. Vamos a probar a dejar el numero de epochs a 50 y solo con dropout a 0.3 y aumentando el LR a 0.0005.
+
+Post-tuneo 3: f1 = 0.824388327721661. Ha mejorado pero sigue siendo peor que el primer tuneo.
+hidden_size 256
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.01
+is_bidirectional True
+dropout 0.3
+num_epochs 50
+lr_adam 0.0005
+
+Incluso si analizamos el val loss, el primero es mejor que este post-tuneo 3.
+Vamo a probar entonces a no poner dropout, dejar el numero de epochs a 50 y bajar el LR a 0.0005 (el primero lo tenia a 0.001).
+
 """
 
 #Mantenemos Hidden_size y aumentamos num_epochs. Se podría probar a la siguiente a aumentar el LR_ADAM a 0.0005 o 0.001
@@ -47,7 +61,7 @@ HIDDEN_SIZE = 256
 NUM_LAYERS_LSTM = 2
 ALPHA_LEAKY_RELU = 0.01
 IS_BIDIRECTIONAL = True 
-DROPOUT = 0.3
+DROPOUT = 0.0
 LR_ADAM = 0.0005
 NUM_EPOCHS = 50
 

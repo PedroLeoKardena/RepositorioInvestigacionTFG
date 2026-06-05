@@ -3,7 +3,8 @@ from tune_pipeline_comun import PipelineComunCRNN
 pkl_train = "train_mfcc_chunked.pkl"
 pkl_test = "test_mfcc_chunked.pkl"
 
-"""Hiperparametros tuneo caja: f1 = 0.5619249651086559
+"""
+Hiperparametros tuneo caja: f1 = 0.5619249651086559
 hidde_size 256 
 batch_size 32
 num_capas_ocultas_lstm 2
@@ -23,6 +24,19 @@ dropout 0.3
 num_epochs 50
 
 Vamos a probar a subir lr_adam a 0.001 y dejar lo demás igual.
+Post-tuneo 2: f1 = 0.5145159402284933.
+hidde_size 256 
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.01
+is_bidirectional True
+lr_adam = 0.001
+dropout 0.3
+num_epochs 50
+
+
+Vamos a probar la configuración del mejor tuneo pero con epochs 50 y hidden_size 256, y con LR_adam a 0.0005.
+
 """
 
 #Hiperparámetros. Dejamos el numero de epochs igual que antes y aumentamos dropout para intentar mejorar el val_loss.
@@ -33,8 +47,8 @@ HIDDEN_SIZE = 256
 NUM_LAYERS_LSTM = 2
 ALPHA_LEAKY_RELU = 0.01
 IS_BIDIRECTIONAL = True 
-DROPOUT = 0.3 
-LR_ADAM = 0.001 
+DROPOUT = 0.0
+LR_ADAM = 0.0005
 NUM_EPOCHS = 50
 
 if __name__ == "__main__":

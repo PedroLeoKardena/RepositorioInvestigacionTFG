@@ -40,6 +40,17 @@ warmup_steps 500
 
 #Vamos a probar a volver a bajar los warmup_steps a 250 y dejar el weight_decay en 0.05.
 
+Post-Tuneo 4: f1 caja = 0.5046497635678261. Ha empeorado.
+learning_rate 3e-05
+batch_size 4
+gradient_acc_steps 4
+num_epochs 8
+weight_decay 0.05
+warmup_steps 250
+
+Sigue empeorando, por lo que podemos achacar el empeoramiento al valor escogido de weight_decay.
+Vamos a probar a bajar el weight_decay a 0.01 y dejar el resto igual que el post-tuneo 3.
+
 """
 
 #Vamos a probar a aumentar el numero de epochs de 5 a 10. Probaremos con un mismo peso de 0.01 y aumentaremos el numero de grad_steps
@@ -51,7 +62,7 @@ LR = 3e-5
 BATCH_SIZE = 4
 GRAD_STEPS = 4
 EPOCHS = 8
-WEIGHT_DECAY = 0.05
+WEIGHT_DECAY = 0.01
 WARMUP_STEPS = 500
 
 
