@@ -54,18 +54,36 @@ weight_decay 0.01
 warmup_steps 250
 
 Tenemos que dejar el LR a 3e-05. Vamos a probar a aumentar el numero de warmup_steps a 500.
+
+Post-Tuneo 5: f1 = 0.7031138628813047. Sigue siendo peor que el post-tuneo 2.
+learning_rate 3e-05
+batch_size 4
+gradient_acc_steps 4
+num_epochs 8
+weight_decay 0.01
+warmup_steps 500
+
+Creemos que el mejor resultado es el tuneo original: f1 = 0.752896174863388
+learning_rate 5e-05
+batch_size 4
+gradient_acc_steps 4
+num_epochs 8
+weight_decay 0.01
+warmup_steps 100
+
+Vamos a dejar dichos hiperparámetros.
 """
 
 #Vamos a probar a bajar el valor de learning_rate a 3e-05, aumentamos valor de epochs. Dejamos mismo numero de wamup_steps.
 #Siguiente puede ser probar a aumentar weitght_decay a 0.05 o warmup_steps a 250.
 
 
-LR = 3e-5
+LR = 5e-5
 BATCH_SIZE = 4
 GRAD_STEPS = 4
 EPOCHS = 8
 WEIGHT_DECAY = 0.01
-WARMUP_STEPS = 500
+WARMUP_STEPS = 100
 
 class HubertAugmentedDiarizadoPipeline(BaseTransformerPipeline):
     @property

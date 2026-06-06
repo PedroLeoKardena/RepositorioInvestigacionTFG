@@ -35,7 +35,19 @@ dropout 0.3
 num_epochs 50
 
 
-Vamos a probar la configuración del mejor tuneo pero con epochs 50 y hidden_size 256, y con LR_adam a 0.0005.
+Vamos a probar la configuración del mejor tuneo con LR_adam a 0.0005.
+
+Post-tuneo 3: f1 = 0.5093604015481491. Ha empeorado otra vez.
+hidde_size 256 
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.01
+is_bidirectional True
+lr_adam = 0.0005
+dropout 0.0
+num_epochs 50
+
+Vamos a utilizar exactamente la mejor configuación pero con leaky_rely a 0:
 
 """
 
@@ -45,10 +57,10 @@ Vamos a probar la configuración del mejor tuneo pero con epochs 50 y hidden_siz
 BATCH_SIZE = 32
 HIDDEN_SIZE = 256
 NUM_LAYERS_LSTM = 2
-ALPHA_LEAKY_RELU = 0.01
+ALPHA_LEAKY_RELU = 0.0
 IS_BIDIRECTIONAL = True 
 DROPOUT = 0.0
-LR_ADAM = 0.0005
+LR_ADAM = 0.001
 NUM_EPOCHS = 50
 
 if __name__ == "__main__":

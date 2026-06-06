@@ -37,6 +37,17 @@ num_epochs 50
 
 Vamos a probar a bajar el LR_ADAM a 0.0005 y quitar el dropout.
 
+Post-tuneo 3: f1 = 0.5327528138247111. Ha mejorado pero sigue siendo peor que el primer tuneo.
+hidden_size 256
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.01
+is_bidirectional True
+dropout 0.0
+num_epochs 50
+lr_adam 0.0005
+
+Vamos a probar con un lr mayor a 0.001 como 0.005 y un leaky_relu a 0. Lo demás se mantiene igual.
 """
 
 #En este caso, se acerca bastante a los hiperparámetros de base, pero mejor. Vamos a probar a aumentar el LR a 0.0005 y aumentar
@@ -46,10 +57,10 @@ Vamos a probar a bajar el LR_ADAM a 0.0005 y quitar el dropout.
 BATCH_SIZE = 32
 HIDDEN_SIZE = 256 
 NUM_LAYERS_LSTM = 2
-ALPHA_LEAKY_RELU = 0.01
+ALPHA_LEAKY_RELU = 0.0
 IS_BIDIRECTIONAL = True 
 DROPOUT = 0.0
-LR_ADAM = 0.0005
+LR_ADAM = 0.005
 NUM_EPOCHS = 50 
 
 if __name__ == "__main__":

@@ -46,14 +46,8 @@ lr_adam 0.001
 num_epochs 50
 
 Vamos a probar la configuración del mejor tuneo pero con epochs 50 y hidden_size 256, y con LR_adam a 0.0005.
-hidden_size 256
-batch_size 16
-num_capas_ocultas_lstm 1
-alpha_leaky_relu 0.01
-is_bidirectional False
-dropout 0.0
-num_epochs 50
-lr_adam 0.001
+
+Post-tuneo 3: f1 grupo = 
 
 """
 
@@ -64,7 +58,7 @@ HIDDEN_SIZE = 256
 NUM_LAYERS_LSTM = 2
 ALPHA_LEAKY_RELU = 0.01
 IS_BIDIRECTIONAL = True 
-DROPOUT = 0.3
+DROPOUT = 0.0
 LR_ADAM = 0.0005
 NUM_EPOCHS = 50
 

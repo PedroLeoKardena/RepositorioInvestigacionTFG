@@ -51,6 +51,22 @@ warmup_steps 250
 Sigue empeorando, por lo que podemos achacar el empeoramiento al valor escogido de weight_decay.
 Vamos a probar a bajar el weight_decay a 0.01 y dejar el resto igual que el post-tuneo 3.
 
+Post-Tuneo 5: 0.4942151698283942. Sigue empeorando.
+learning_rate 3e-05
+batch_size 4
+gradient_acc_steps 4
+num_epochs 8
+weight_decay 0.01
+warmup_steps 500
+
+
+Creemos que hemos llegado al mejor resultado con el post-tuneo 2. Tuneo Final con f1 = 0.5338814280992676
+learning_rate 3e-05
+batch_size 4
+gradient_acc_steps 4
+num_epochs 8
+weight_decay 0.01
+warmup_steps 250
 """
 
 #Vamos a probar a aumentar el numero de epochs de 5 a 10. Probaremos con un mismo peso de 0.01 y aumentaremos el numero de grad_steps
@@ -63,7 +79,7 @@ BATCH_SIZE = 4
 GRAD_STEPS = 4
 EPOCHS = 8
 WEIGHT_DECAY = 0.01
-WARMUP_STEPS = 500
+WARMUP_STEPS = 250
 
 
 class HubertAugmentedPipeline(BaseTransformerPipeline):
