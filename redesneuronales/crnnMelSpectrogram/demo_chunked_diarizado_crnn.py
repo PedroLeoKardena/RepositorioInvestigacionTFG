@@ -59,7 +59,29 @@ dropout 0.0
 num_epochs 50
 lr_adam 0.0005
 
-Vamos a probar ahora con un lr mayor a 0.001 como 0.005, y un leaky_relu a 0. Lo demás se mantiene igual.
+Vamos a probar ahora con un lr mayor a 0.001 como 0.005, y un leaky_relu a 0.0 Lo demás se mantiene igual.
+
+Post-tuneo 5: f1 = 0.8586666666666667. Ha mejorado bastante. Es levemente peor al tuneo inicial. Vamos a probar a dejar el lr en 0.001
+hidden_size 256
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.01
+is_bidirectional True
+dropout 0.0
+num_epochs 50
+lr_adam 0.005
+
+Post-tuneo 6: 0.7941287878787878. Ha empeorado.
+hidden_size 256
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.0
+is_bidirectional True
+dropout 0.0
+num_epochs 50
+lr_adam 0.001
+
+Vamos a probar el tuneo inicial pero con un leaky_relu mayor a 0.01, como de 0.05.
 """
 
 #Mantenemos Hidden_size y aumentamos num_epochs. Se podría probar a la siguiente a aumentar el LR_ADAM a 0.0005 o 0.001
@@ -71,10 +93,10 @@ Vamos a probar ahora con un lr mayor a 0.001 como 0.005, y un leaky_relu a 0. Lo
 BATCH_SIZE = 32
 HIDDEN_SIZE = 256 
 NUM_LAYERS_LSTM = 2
-ALPHA_LEAKY_RELU = 0.0
+ALPHA_LEAKY_RELU = 0.05
 IS_BIDIRECTIONAL = True 
 DROPOUT = 0.0
-LR_ADAM = 0.005
+LR_ADAM = 0.001
 NUM_EPOCHS = 50
 
 if __name__ == "__main__":

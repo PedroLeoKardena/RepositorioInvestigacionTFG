@@ -47,8 +47,44 @@ lr_adam = 0.0005
 dropout 0.0
 num_epochs 50
 
-Vamos a utilizar exactamente la mejor configuación pero con leaky_rely a 0:
+Vamos a utilizar exactamente la mejor configuación pero con leaky_rely a 0
+Vamos a probar a subir el lr_adam a 0.005.
 
+Post-tuneo 4: f1 = 0.516719416896888. Ha empeorado bastante.
+hidden_size 256 
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.0
+is_bidirectional True
+lr_adam = 0.005
+dropout 0.0
+num_epochs 50
+
+Entonces vamos a probar a bajar el lr_adam a 0.0005, si no lo dejamos a 0.001 y probamos despues otras configuraciones de leaky_relu.
+
+Post-tuneo 5: f1 caja = 0.5334132218638231. Sigue siendo peor que el tuneo 5. 
+hidden_size 256 
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.0
+is_bidirectional True
+lr_adam = 0.0005
+dropout 0.0
+num_epochs 50
+
+El mejor lr_adam es 0.001. Vamos a probar a dejar dicho lr_adam y subir solo el dropout con el leaky_relu a 0.0. También compararemos el val_loss con el del post-tuneo 4.
+
+Post-tuneo 6: f1 caja = 0.5168860677507237:
+hidden_size 256 
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.0
+is_bidirectional True
+lr_adam = 0.001
+dropout 0.3
+num_epochs 50
+
+Vemos que aumentar el dropout no mejora el f1. Vamos a probar con leaky_relu a 0 y dropout a 0, lr_adam a 0.001.
 """
 
 #Hiperparámetros. Dejamos el numero de epochs igual que antes y aumentamos dropout para intentar mejorar el val_loss.

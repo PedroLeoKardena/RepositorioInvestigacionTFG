@@ -12,6 +12,7 @@ alpha_leaky_relu 0.01
 is_bidirectional True
 dropout 0.0
 num_epochs 50
+lr_adam 0.001
 
 Post-Tuneo 1: f1 = 0.5572777502536105. Ha empeorado:
 hidden_size 256
@@ -48,19 +49,55 @@ num_epochs 50
 lr_adam 0.0005
 
 Vamos a probar con un lr mayor a 0.001 como 0.005 y un leaky_relu a 0. Lo demás se mantiene igual.
+
+Post-tuneo 4: f1 = 0.41499399531997583.
+hidden_size 256
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.0
+is_bidirectional True
+dropout 0.0
+num_epochs 50
+lr_adam 0.005
+
+Vamos a probar a bajar lr a 0.001 y dejar el leaky_relu a 0.0. Es decir, la mejor configuración pero con leaky_relu a 0.0.
+
+Post-tuneo 5: f1 = 0.5266239021881699. Sigue siendo peor que el f1  original.
+hidden_size 256
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.0
+is_bidirectional True
+dropout 0.0
+num_epochs 50
+lr_adam 0.001
+
+Vamos a probar con un leaky_relu mayor.
+
+Post-tuneo 6: f1 = 0.537408277504679. Sigue siendo peor que el tuneo inicial. 
+hidden_size 256
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.05
+is_bidirectional True
+dropout 0.0
+num_epochs 50
+lr_adam 0.001
+
+Vamos a probar a dejar todo igual al tuneo inicial y solo aumentar el batch_size a 64.
 """
 
 #En este caso, se acerca bastante a los hiperparámetros de base, pero mejor. Vamos a probar a aumentar el LR a 0.0005 y aumentar
 #el num_epochs. También aumentamos el dropout para pelear en contra del overfitting. Lo siguiente puede ser aumentar el hidden_size
 
 #Hiperparámetros
-BATCH_SIZE = 32
-HIDDEN_SIZE = 256 
+BATCH_SIZE = 64
+HIDDEN_SIZE = 512 
 NUM_LAYERS_LSTM = 2
-ALPHA_LEAKY_RELU = 0.0
+ALPHA_LEAKY_RELU = 0.05
 IS_BIDIRECTIONAL = True 
 DROPOUT = 0.0
-LR_ADAM = 0.005
+LR_ADAM = 0.001
 NUM_EPOCHS = 50 
 
 if __name__ == "__main__":
