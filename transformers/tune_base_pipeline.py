@@ -331,7 +331,7 @@ class BaseTransformerPipeline(ABC):
             remove_columns=['nombre_archivo']
         )
 
-        print("Preprocesando conjunto de test...")
+        print("Preprocesando conjunto de test (holdout validation)...")
         test_dataset = test_dataset.map(
             lambda batch: self.preprocesar_batch(batch, ruta_audios, feature_extractor),
             batched=True,
@@ -488,7 +488,7 @@ class BaseTransformerPipeline(ABC):
 
             trainer_final.train()
 
-            print("\nEvaluando Modelo Final sobre el conjunto de TEST...")
+            print("\nEvaluando Modelo Final sobre el conjunto de TEST (Hold-out Validation / Preproducción)...")
             modelo_final.eval()
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
             modelo_final.to(device)
@@ -524,16 +524,16 @@ class BaseTransformerPipeline(ABC):
             mlflow.log_metric("cv_std_acc_grupo", float(np.std(cv_accuracies_grupo)))
             mlflow.log_metric("cv_mean_acc_caja", float(np.mean(cv_accuracies_caja)))
             mlflow.log_metric("cv_std_acc_caja", float(np.std(cv_accuracies_caja)))
-            mlflow.log_metric("test_acc_grupo", reporte_grupo_dict["accuracy"])
-            mlflow.log_metric("test_acc_caja", reporte_caja_dict["accuracy"])
+            mlflow.log_metric("holdout_acc_grupo", reporte_grupo_dict["accuracy"])
+            mlflow.log_metric("holdout_acc_caja", reporte_caja_dict["accuracy"])
 
-            mlflow.log_metric("test_f1_grupo", reporte_grupo_dict["weighted avg"]["f1-score"])
-            mlflow.log_metric("test_recall_grupo", reporte_grupo_dict["weighted avg"]["recall"])
-            mlflow.log_metric("test_precision_grupo", reporte_grupo_dict["weighted avg"]["precision"])
+            mlflow.log_metric("holdout_f1_grupo", reporte_grupo_dict["weighted avg"]["f1-score"])
+            mlflow.log_metric("holdout_recall_grupo", reporte_grupo_dict["weighted avg"]["recall"])
+            mlflow.log_metric("holdout_precision_grupo", reporte_grupo_dict["weighted avg"]["precision"])
             
-            mlflow.log_metric("test_f1_caja", reporte_caja_dict["weighted avg"]["f1-score"])
-            mlflow.log_metric("test_recall_caja", reporte_caja_dict["weighted avg"]["recall"])
-            mlflow.log_metric("test_precision_caja", reporte_caja_dict["weighted avg"]["precision"])
+            mlflow.log_metric("holdout_f1_caja", reporte_caja_dict["weighted avg"]["f1-score"])
+            mlflow.log_metric("holdout_recall_caja", reporte_caja_dict["weighted avg"]["recall"])
+            mlflow.log_metric("holdout_precision_caja", reporte_caja_dict["weighted avg"]["precision"])
 
             mlflow.log_dict(reporte_grupo_dict, "reporte_clasificacion_grupo.json")
             mlflow.log_dict(reporte_caja_dict, "reporte_clasificacion_caja.json")

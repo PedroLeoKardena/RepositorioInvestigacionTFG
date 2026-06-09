@@ -106,7 +106,39 @@ num_epochs 50
 lr_adam 0.001
 
 
-A la proxima probaremos a poner hidden_size 512 con dicho batch_size
+A la proxima probaremos a poner hidden_size 512 con dicho batch_size 64.
+
+Post-tuneo 9: f1 grupo = 0.7912524983344437. No mejora la mejor configuración.
+hidden_size 512
+batch_size 64
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.05
+is_bidirectional True
+dropout 0.0
+num_epochs 50
+lr_adam 0.001
+
+Ahora probamos con leaky_relu = 0.01.
+
+Post-tuneo 10: f1 grupo = 0.7735053763440861. No mejor ni al de antes
+hidden_size 512
+batch_size 64
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.05
+is_bidirectional True
+dropout 0.0
+num_epochs 50
+lr_adam 0.001
+
+De este modo podemos establecer que la configuración final será:
+hidden_size 256
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.01
+is_bidirectional True
+dropout 0.0
+num_epochs 50
+lr_adam 0.001
 """
 
 #Mantenemos Hidden_size y aumentamos num_epochs. Se podría probar a la siguiente a aumentar el LR_ADAM a 0.0005 o 0.001
@@ -115,10 +147,10 @@ A la proxima probaremos a poner hidden_size 512 con dicho batch_size
 #del overfitting. Ponemos a 0.3
 
 
-BATCH_SIZE = 64
-HIDDEN_SIZE = 512 
+BATCH_SIZE = 32
+HIDDEN_SIZE = 256
 NUM_LAYERS_LSTM = 2
-ALPHA_LEAKY_RELU = 0.05
+ALPHA_LEAKY_RELU = 0.01
 IS_BIDIRECTIONAL = True 
 DROPOUT = 0.0
 LR_ADAM = 0.001

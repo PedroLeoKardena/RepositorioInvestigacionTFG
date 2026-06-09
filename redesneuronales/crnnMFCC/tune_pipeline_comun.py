@@ -336,17 +336,17 @@ class PipelineComunCRNN(ABC):
             reporte_caja_dict = classification_report(etiquetas_caja, preds_caja, labels=labels_caja, target_names=le_caja.classes_, zero_division=0, output_dict=True)
             print(reporte_caja_str)
 
-            mlflow.log_metric("test_acc_grupo", reporte_grupo_dict["accuracy"])
-            mlflow.log_metric("test_acc_caja", reporte_caja_dict["accuracy"])
+            mlflow.log_metric("holdout_acc_grupo", reporte_grupo_dict["accuracy"])
+            mlflow.log_metric("holdout_acc_caja", reporte_caja_dict["accuracy"])
 
-            mlflow.log_metric("test_f1_grupo", reporte_grupo_dict["weighted avg"]["f1-score"])
-            mlflow.log_metric("test_recall_grupo", reporte_grupo_dict["weighted avg"]["recall"])
-            mlflow.log_metric("test_precision_grupo", reporte_grupo_dict["weighted avg"]["precision"])
+            mlflow.log_metric("holdout_f1_grupo", reporte_grupo_dict["weighted avg"]["f1-score"])
+            mlflow.log_metric("holdout_recall_grupo", reporte_grupo_dict["weighted avg"]["recall"])
+            mlflow.log_metric("holdout_precision_grupo", reporte_grupo_dict["weighted avg"]["precision"])
             
             # Métricas globales para Caja Torácica (Media ponderada)
-            mlflow.log_metric("test_f1_caja", reporte_caja_dict["weighted avg"]["f1-score"])
-            mlflow.log_metric("test_recall_caja", reporte_caja_dict["weighted avg"]["recall"])
-            mlflow.log_metric("test_precision_caja", reporte_caja_dict["weighted avg"]["precision"])
+            mlflow.log_metric("holdout_f1_caja", reporte_caja_dict["weighted avg"]["f1-score"])
+            mlflow.log_metric("holdout_recall_caja", reporte_caja_dict["weighted avg"]["recall"])
+            mlflow.log_metric("holdout_precision_caja", reporte_caja_dict["weighted avg"]["precision"])
 
             mlflow.log_dict(reporte_grupo_dict, "reporte_clasificacion_grupo.json")
             mlflow.log_dict(reporte_caja_dict, "reporte_clasificacion_caja.json")

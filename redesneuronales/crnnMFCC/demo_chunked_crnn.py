@@ -97,13 +97,33 @@ dropout 0.0
 num_epochs 50
 
 Vamos a probar con 512 de hidden_size y batch_size de 64 con la configuracion inicial.
+
+Post-tuneo 8: f1 caja = 0.557267357416102. Sigue siendo levemente peor que la inicial.
+hidden_size 512 
+batch_size 64
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.0
+is_bidirectional True
+lr_adam = 0.001
+dropout 0.0
+num_epochs 50
+
+Vamos a quedarnos entonces con el tuneo inicial:
+hidde_size 256 
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.01
+is_bidirectional True
+dropout 0.0
+num_epochs 50
+lr_adam 0.001
 """
 
 #Hiperparámetros. Dejamos el numero de epochs igual que antes y aumentamos dropout para intentar mejorar el val_loss.
 #Aumentamos tambien el LR_adam a 0.0005. A la siguiente buscamos aumentar el hidden_size.
 
 BATCH_SIZE = 64
-HIDDEN_SIZE = 512
+HIDDEN_SIZE = 256
 NUM_LAYERS_LSTM = 2
 ALPHA_LEAKY_RELU = 0.01
 IS_BIDIRECTIONAL = True 

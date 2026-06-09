@@ -109,6 +109,26 @@ num_epochs 20
 
 #Vamos a probar aumentando el hidden_size a 512 y el batch_size a 64, 2 capas de lstm y bidireccional. Si no mejora nos quedamos con post-tuneo 4.
 
+Post-tuneo 8: f1 grupo = 0.8078260869565217
+hidden_size 512
+batch_size 64
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.0
+is_bidirectional True
+dropout 0.0
+lr_adam 0.001
+num_epochs 20
+
+Nos quedamos con la mejor configuración:
+hidden_size 128
+batch_size 32
+num_capas_ocultas_lstm 1
+alpha_leaky_relu 0.01
+is_bidirectional False
+dropout 0.0
+lr_adam 0.001
+num_epochs 20
+
 """
 
 #En este caso, lo que sucede es que tambien hay subida del val_loss. Vamos a dejar el numero de hidden_size, aumentar el batch_size a 32.
@@ -116,7 +136,7 @@ num_epochs 20
 BATCH_SIZE = 64
 HIDDEN_SIZE = 512
 NUM_LAYERS_LSTM = 2
-ALPHA_LEAKY_RELU = 0.0
+ALPHA_LEAKY_RELU = 0.01
 IS_BIDIRECTIONAL = True 
 DROPOUT = 0.0
 LR_ADAM = 0.001

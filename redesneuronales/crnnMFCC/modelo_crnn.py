@@ -84,7 +84,7 @@ class CRNN(nn.Module):
         x = x.permute(0, 3, 1, 2)
 
         #Aun seguimos teniendo una salida de 4D, ahora mismo con la forma (batch_size, num_pasos_temporales_reducidos, canales, num_caracteristicas). 
-        #El LSTM necesita una salida de 3D con la forma (batch_size, num_pasos_temporales_reducidos, caracteristicas). Deberemos obtener los dos primeros valores:
+        #El LSTM necesita una salida de 3D con la forma (   batch_size, num_pasos_temporales_reducidos, caracteristicas). Deberemos obtener los dos primeros valores:
         batch_size = x.size(0)
         tiempo = x.size(1)
 
