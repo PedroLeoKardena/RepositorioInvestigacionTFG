@@ -96,15 +96,28 @@ num_epochs 20
 
 Los resultados de val_loss tambien han empeorado, por lo que aumentar el dropout no ha resultado del todo beneficioso.
 De este modo, vamos a deajar el dropout a 0.0, el numero de capas a 1. Vamos a probar cambiando el valor de leaky_relu a 0.0.
+
+Post-tuneo 7: f1 grupo = 0.765765629719118
+hidden_size 128
+batch_size 32
+num_capas_ocultas_lstm 1
+alpha_leaky_relu 0.0
+is_bidirectional False
+dropout 0.0
+lr_adam 0.001
+num_epochs 20
+
+#Vamos a probar aumentando el hidden_size a 512 y el batch_size a 64, 2 capas de lstm y bidireccional. Si no mejora nos quedamos con post-tuneo 4.
+
 """
 
 #En este caso, lo que sucede es que tambien hay subida del val_loss. Vamos a dejar el numero de hidden_size, aumentar el batch_size a 32.
 #Luego aumentamos el dropout a 0.3. Aumentamos el num_epochs de 20 a 50. LR_adam lo pasamos de 0.001 a 0.0005
-BATCH_SIZE = 32
-HIDDEN_SIZE = 128
-NUM_LAYERS_LSTM = 1
+BATCH_SIZE = 64
+HIDDEN_SIZE = 512
+NUM_LAYERS_LSTM = 2
 ALPHA_LEAKY_RELU = 0.0
-IS_BIDIRECTIONAL = False 
+IS_BIDIRECTIONAL = True 
 DROPOUT = 0.0
 LR_ADAM = 0.001
 NUM_EPOCHS = 20

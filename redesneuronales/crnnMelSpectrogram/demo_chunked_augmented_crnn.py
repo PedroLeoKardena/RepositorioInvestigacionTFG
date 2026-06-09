@@ -84,7 +84,43 @@ dropout 0.0
 num_epochs 50
 lr_adam 0.001
 
-Vamos a probar a dejar todo igual al tuneo inicial y solo aumentar el batch_size a 64.
+Vamos a probar a dejar todo igual al tuneo inicial y solo aumentar el batch_size a 64 y el hidden_size a 512.
+
+Post-tuneo 7: f1 = 0.5764008042358557. Es mejor que el mejor tuneo.
+hidden_size 512
+batch_size 64
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.01
+is_bidirectional True
+dropout 0.0
+num_epochs 50
+lr_adam 0.001
+
+En este caso el val_loss ha aumentado mucho, pero el val_loss en si mide la confianza matemática del modelo. 
+Penaliza duramente la duda. Si el modelo duda entre una opción u otra con un % parecido entre ambas opciones, el loss es mayor,
+pero a lo mejor al dudar al final elige la opción correcta.
+
+Ahora vamos a probar a bajar el hidden_size a 256 y dejar dicho batch_size
+
+Post-tuneo 8: f1 = 0.4949537385251967. Es bastante peor.
+hidden_size 256
+batch_size 64
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.01
+is_bidirectional True
+dropout 0.0
+num_epochs 50
+lr_adam 0.001
+
+Vamos entonces a dejar la configuración del post-tuneo 7 como la configuración final:
+hidden_size 512
+batch_size 64
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.01
+is_bidirectional True
+dropout 0.0
+num_epochs 50
+lr_adam 0.001
 """
 
 #En este caso, se acerca bastante a los hiperparámetros de base, pero mejor. Vamos a probar a aumentar el LR a 0.0005 y aumentar
@@ -92,9 +128,9 @@ Vamos a probar a dejar todo igual al tuneo inicial y solo aumentar el batch_size
 
 #Hiperparámetros
 BATCH_SIZE = 64
-HIDDEN_SIZE = 512 
+HIDDEN_SIZE = 512
 NUM_LAYERS_LSTM = 2
-ALPHA_LEAKY_RELU = 0.05
+ALPHA_LEAKY_RELU = 0.01
 IS_BIDIRECTIONAL = True 
 DROPOUT = 0.0
 LR_ADAM = 0.001

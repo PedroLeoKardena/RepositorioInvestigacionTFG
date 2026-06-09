@@ -85,15 +85,27 @@ dropout 0.3
 num_epochs 50
 
 Vemos que aumentar el dropout no mejora el f1. Vamos a probar con leaky_relu a 0 y dropout a 0, lr_adam a 0.001.
+
+Post-tuneo 7: f1 caja = 0.5363037547362733. Sigue siendo peor que el inicial
+hidden_size 256 
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.0
+is_bidirectional True
+lr_adam = 0.001
+dropout 0.0
+num_epochs 50
+
+Vamos a probar con 512 de hidden_size y batch_size de 64 con la configuracion inicial.
 """
 
 #Hiperparámetros. Dejamos el numero de epochs igual que antes y aumentamos dropout para intentar mejorar el val_loss.
 #Aumentamos tambien el LR_adam a 0.0005. A la siguiente buscamos aumentar el hidden_size.
 
-BATCH_SIZE = 32
-HIDDEN_SIZE = 256
+BATCH_SIZE = 64
+HIDDEN_SIZE = 512
 NUM_LAYERS_LSTM = 2
-ALPHA_LEAKY_RELU = 0.0
+ALPHA_LEAKY_RELU = 0.01
 IS_BIDIRECTIONAL = True 
 DROPOUT = 0.0
 LR_ADAM = 0.001

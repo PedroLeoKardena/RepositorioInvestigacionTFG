@@ -82,6 +82,31 @@ num_epochs 50
 lr_adam 0.001
 
 Vamos a probar el tuneo inicial pero con un leaky_relu mayor a 0.01, como de 0.05.
+
+Post-tuneo 7: f1 grupo = 0.6982001150086257. Ha empeorado bastante.
+hidden_size 256
+batch_size 32
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.05
+is_bidirectional True
+dropout 0.0
+num_epochs 50
+lr_adam 0.001
+
+Entonces vamos a dejar todo igual al mejor tuneo, y ahora vamos a probar a subir el batch_size a 64.
+
+Post-tuneo 8: f1 grupo = 0.6532828282828282 Sigue siendo peor
+hidden_size 256
+batch_size 64
+num_capas_ocultas_lstm 2
+alpha_leaky_relu 0.05
+is_bidirectional True
+dropout 0.0
+num_epochs 50
+lr_adam 0.001
+
+
+A la proxima probaremos a poner hidden_size 512 con dicho batch_size
 """
 
 #Mantenemos Hidden_size y aumentamos num_epochs. Se podría probar a la siguiente a aumentar el LR_ADAM a 0.0005 o 0.001
@@ -90,8 +115,8 @@ Vamos a probar el tuneo inicial pero con un leaky_relu mayor a 0.01, como de 0.0
 #del overfitting. Ponemos a 0.3
 
 
-BATCH_SIZE = 32
-HIDDEN_SIZE = 256 
+BATCH_SIZE = 64
+HIDDEN_SIZE = 512 
 NUM_LAYERS_LSTM = 2
 ALPHA_LEAKY_RELU = 0.05
 IS_BIDIRECTIONAL = True 
