@@ -17,3 +17,4 @@ workflow_diarizacion.md
 lista_instalaciones_env_audio.txt
 __pycache__ 
 .ipynb_checkpoints
+.claude

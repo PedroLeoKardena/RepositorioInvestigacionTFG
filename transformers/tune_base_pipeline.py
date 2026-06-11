@@ -1,4 +1,5 @@
 import os
+import shutil
 import librosa
 import mlflow
 import numpy as np
@@ -13,7 +14,8 @@ from sklearn.metrics import confusion_matrix
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, label_binarize
+from sklearn.metrics import classification_report, confusion_matrix, f1_score, roc_auc_score, roc_curve, auc
 from sklearn.metrics import classification_report
 from datasets import Dataset
 from torch.utils.data import DataLoader
@@ -209,7 +211,7 @@ class BaseTransformerPipeline(ABC):
         audio_arrays = []
         for nombre_archivo in batch["nombre_archivo"]:
             ruta_audio = os.path.join(ruta_audios, nombre_archivo)
-            y, _ = librosa.load(ruta_audio, sr=None)
+            y, _ = librosa.load(ruta_audio, sr=16000)
             audio_arrays.append(y)
 
         inputs = feature_extractor(
@@ -228,6 +230,7 @@ class BaseTransformerPipeline(ABC):
         dataset.set_format('torch')
         dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
         preds_grupo, preds_caja = [], []
+        probs_grupo, probs_caja = [], []
 
         with torch.no_grad():
             for batch in dataloader:
@@ -238,14 +241,24 @@ class BaseTransformerPipeline(ABC):
                 
                 attention_mask = batch['attention_mask'].to(device) if 'attention_mask' in batch else None
                 outputs = modelo(audio_input, attention_mask=attention_mask)
-                preds_grupo.extend(torch.argmax(outputs['logits_grupo'], dim=-1).tolist())
-                preds_caja.extend(torch.argmax(outputs['logits_caja'], dim=-1).tolist())
+                logits_g = outputs['logits_grupo']
+                logits_c = outputs['logits_caja']
+                
+                # Calculamos probabilidades usando Softmax
+                probs_g = torch.softmax(logits_g, dim=-1)
+                probs_c = torch.softmax(logits_c, dim=-1)
+                
+                preds_grupo.extend(torch.argmax(logits_g, dim=-1).cpu().tolist())
+                preds_caja.extend(torch.argmax(logits_c, dim=-1).cpu().tolist())
+                
+                probs_grupo.extend(probs_g.cpu().tolist())
+                probs_caja.extend(probs_c.cpu().tolist())
 
         real_grupo = [int(x) for x in dataset['label_grupo']]
         real_caja = [int(x) for x in dataset['label_caja']]
 
-        return preds_grupo, preds_caja, real_grupo, real_caja
-
+        return preds_grupo, preds_caja, real_grupo, real_caja, np.array(probs_grupo), np.array(probs_caja)
+    
     def plot_confusion_matrix(self, real_grupo, preds_grupo, real_caja, preds_caja, clases_grupo, clases_caja):
         fig, axes = plt.subplots(1, 2, figsize=(16, 6))
         fig.suptitle(f"Matrices de Confusión - {self.nombre_modelo_guardado}", fontsize=16, fontweight="bold")
@@ -270,8 +283,41 @@ class BaseTransformerPipeline(ABC):
         mlflow.log_figure(fig, nombre_archivo_fig)
         
         plt.close(fig)
+
+    def plot_roc_curve(self, real_grupo, probs_grupo, real_caja, probs_caja, clases_grupo, clases_caja):
+        fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+        fig.suptitle(f"Curvas ROC - {self.nombre_modelo_guardado}", fontsize=16, fontweight="bold")
+
+        for real, probs, clases, ax, title in zip(
+            [real_grupo, real_caja], 
+            [probs_grupo, probs_caja], 
+            [clases_grupo, clases_caja], 
+            axes, 
+            ["Grupo Clínico", "Caja Torácica"]
+        ):
+            real_bin = label_binarize(real, classes=np.arange(len(clases)))
+            if len(clases) == 2:
+                real_bin = np.hstack((1 - real_bin, real_bin))
+
+            for j, clase in enumerate(clases):
+                fpr, tpr, _ = roc_curve(real_bin[:, j], probs[:, j])
+                roc_auc = auc(fpr, tpr)
+                ax.plot(fpr, tpr, lw=2, label=f'{clase} (AUC = {roc_auc:.2f})')
+
+            ax.plot([0, 1], [0, 1], 'k--', lw=2)
+            ax.set_xlim([0.0, 1.0])
+            ax.set_ylim([0.0, 1.05])
+            ax.set_xlabel('Tasa de Falsos Positivos')
+            ax.set_ylabel('Tasa de Verdaderos Positivos')
+            ax.set_title(f'ROC: {title}')
+            ax.legend(loc="lower right")
+
+        plt.tight_layout()
+        nombre_archivo_fig = f"roc_curve_{self.nombre_modelo_guardado}.png"
+        mlflow.log_figure(fig, nombre_archivo_fig)
+        plt.close(fig)
     
-    def ejecutar(self):
+    def ejecutar(self, modo_tuning=True):
         ruta_base = Path(__file__).resolve().parent.parent
         ruta_resultados = ruta_base / "resultados"
         ruta_db = ruta_resultados / "resultados_voces.db"
@@ -331,7 +377,7 @@ class BaseTransformerPipeline(ABC):
             remove_columns=['nombre_archivo']
         )
 
-        print("Preprocesando conjunto de test (holdout validation)...")
+        print("Preprocesando conjunto de test...")
         test_dataset = test_dataset.map(
             lambda batch: self.preprocesar_batch(batch, ruta_audios, feature_extractor),
             batched=True,
@@ -341,10 +387,10 @@ class BaseTransformerPipeline(ABC):
 
         
 
-        with mlflow.start_run(run_name=self.nombre_run):
-            
+        with mlflow.start_run(run_name=f"{self.nombre_run}_{self.nombre_dataset}"):
 
             mlflow.log_param("modelo", self.nombre_modelo)
+            mlflow.log_param("dataset", self.nombre_dataset)
             mlflow.log_param("learning_rate", self.learning_rate)
             mlflow.log_param("batch_size", self.batch_size)
             mlflow.log_param("gradient_acc_steps", self.grad_steps)
@@ -354,6 +400,9 @@ class BaseTransformerPipeline(ABC):
 
             cv_accuracies_grupo = []
             cv_accuracies_caja = []
+            cv_f1_macro_grupo = []
+            cv_f1_macro_caja = []
+
 
             for fold_val in range(5):
                 print(f"\n--- Iniciando Entrenamiento Fold {fold_val}/4 ---")
@@ -368,43 +417,23 @@ class BaseTransformerPipeline(ABC):
 
                 output_dir_cv = str(ruta_modelos / f"{self.nombre_modelo_guardado}_fold_{fold_val}")
 
-                if "whisper" in self.nombre_modelo:
-                    print("Creando training arguments para whisper")
-                    training_args_cv = TrainingArguments(
-                        output_dir=output_dir_cv,
-                        eval_strategy="epoch",
-                        save_strategy="no",
-                        learning_rate=self.learning_rate,
-                        per_device_train_batch_size=self.batch_size,
-                        per_device_eval_batch_size=self.batch_size,
-                        gradient_accumulation_steps=self.grad_steps,
-                        gradient_checkpointing=True,
-                        num_train_epochs=self.epochs,
-                        weight_decay=self.weight_decay,
-                        warmup_steps=self.warmup_steps,
-                        logging_steps=10,
-                        remove_unused_columns=False,
-                        report_to="none",
-                        bf16=True
-                    )
-                else:
-                    print("Creando training args para wav2vec2 o hubert")
-                    training_args_cv = TrainingArguments(
-                        output_dir=output_dir_cv,
-                        eval_strategy="epoch",
-                        save_strategy="no",
-                        learning_rate=self.learning_rate,
-                        per_device_train_batch_size=self.batch_size,
-                        per_device_eval_batch_size=self.batch_size,
-                        gradient_accumulation_steps=self.grad_steps,
-                        #gradient_checkpointing=True,
-                        num_train_epochs=self.epochs,
-                        weight_decay=self.weight_decay,
-                        warmup_steps=self.warmup_steps,
-                        logging_steps=10,
-                        remove_unused_columns=False,
-                        bf16=True
-                    )
+                training_args_cv = TrainingArguments(
+                    output_dir=output_dir_cv,
+                    eval_strategy="epoch",
+                    save_strategy="epoch",
+                    load_best_model_at_end=True,
+                    save_total_limit=1,
+                    learning_rate=self.learning_rate,
+                    per_device_train_batch_size=self.batch_size,
+                    per_device_eval_batch_size=self.batch_size,
+                    gradient_accumulation_steps=self.grad_steps,
+                    num_train_epochs=self.epochs,
+                    weight_decay=self.weight_decay,
+                    warmup_steps=self.warmup_steps,
+                    logging_steps=10,
+                    remove_unused_columns=False,
+                    bf16=True
+                )
                 
 
                 trainer_cv = MultiTaskTrainer(
@@ -421,24 +450,47 @@ class BaseTransformerPipeline(ABC):
                 device = 'cuda' if torch.cuda.is_available() else 'cpu'
                 modelo_cv.to(device)
 
-                preds_grupo, preds_caja, real_grupo, real_caja = self.evaluar_por_batches(modelo_cv, val_fold_ds, batch_size=4, device=device)
+                preds_grupo, preds_caja, real_grupo, real_caja, _, _ = self.evaluar_por_batches(modelo_cv, val_fold_ds, batch_size=4, device=device)
 
                 acc_grupo = sum(p == r for p, r in zip(preds_grupo, real_grupo)) / len(real_grupo)
                 acc_caja = sum(p == r for p, r in zip(preds_caja, real_caja)) / len(real_caja)
+                f1_grupo = f1_score(real_grupo, preds_grupo, average='macro', zero_division=0)
+                f1_caja = f1_score(real_caja, preds_caja, average='macro', zero_division=0)
+
                 cv_accuracies_grupo.append(acc_grupo)
                 cv_accuracies_caja.append(acc_caja)
+                cv_f1_macro_grupo.append(f1_grupo)
+                cv_f1_macro_caja.append(f1_caja)
+
                 mlflow.log_metric(f"fold_{fold_val}_acc_grupo", acc_grupo)
                 mlflow.log_metric(f"fold_{fold_val}_acc_caja", acc_caja)
+                mlflow.log_metric(f"fold_{fold_val}_f1_macro_grupo", f1_grupo)
+                mlflow.log_metric(f"fold_{fold_val}_f1_macro_caja", f1_caja)
 
                 print(f"Resultados Fold {fold_val} -> Accuracy Grupo: {acc_grupo:.4f} | Accuracy Caja: {acc_caja:.4f}")
                 
-                #TODO: eliminar delete cuando tengamos hiperparámetros finales
                 del trainer_cv, modelo_cv
                 torch.cuda.empty_cache()
                 gc.collect()
+                if os.path.exists(output_dir_cv):
+                    shutil.rmtree(output_dir_cv)
 
             print(f"Precisión Media Grupo: {np.mean(cv_accuracies_grupo):.4f} (+/- {np.std(cv_accuracies_grupo):.4f})")
             print(f"Precisión Media Caja: {np.mean(cv_accuracies_caja):.4f} (+/- {np.std(cv_accuracies_caja):.4f})")
+            print(f"F1-Macro Medio Grupo: {np.mean(cv_f1_macro_grupo):.4f}")
+            print(f"F1-Macro Medio Caja: {np.mean(cv_f1_macro_caja):.4f}")
+
+            mlflow.log_metric("cv_mean_acc_grupo", float(np.mean(cv_accuracies_grupo)))
+            mlflow.log_metric("cv_std_acc_grupo", float(np.std(cv_accuracies_grupo)))
+            mlflow.log_metric("cv_mean_acc_caja", float(np.mean(cv_accuracies_caja)))
+            mlflow.log_metric("cv_std_acc_caja", float(np.std(cv_accuracies_caja)))
+            mlflow.log_metric("cv_mean_f1_macro_grupo", float(np.mean(cv_f1_macro_grupo)))
+            mlflow.log_metric("cv_mean_f1_macro_caja", float(np.mean(cv_f1_macro_caja)))
+
+            if modo_tuning:
+                print(f"MODO TUNING FINALIZADO")
+                print("El conjunto Test no ha sido evaluado.")
+                return
 
             print("Iniciando Entrenamiento Final del Modelo con TODOS los datos de Train...")
             train_final_ds = train_dataset.remove_columns(['fold'])
@@ -446,39 +498,21 @@ class BaseTransformerPipeline(ABC):
             modelo_final = self.get_multitask_model(num_labels_grupo, num_labels_caja)
             output_dir_final = str(ruta_modelos / f"entrenamiento_final_{self.nombre_modelo_guardado}")
             
-            if "whisper" in self.nombre_modelo:
-                training_args_final = TrainingArguments(
-                    output_dir=output_dir_final,
-                    eval_strategy="no",
-                    save_strategy="no",
-                    learning_rate=self.learning_rate,
-                    per_device_train_batch_size=self.batch_size,
-                    gradient_accumulation_steps=self.grad_steps,
-                    gradient_checkpointing=True,
-                    num_train_epochs=self.epochs,
-                    weight_decay=self.weight_decay,
-                    warmup_steps=self.warmup_steps,
-                    logging_steps=10,
-                    report_to="none",
-                    remove_unused_columns=False,
-                    bf16=True
-                )
-            else:
-                training_args_final = TrainingArguments(
-                    output_dir=output_dir_final,
-                    eval_strategy="no",
-                    save_strategy="no",
-                    learning_rate=self.learning_rate,
-                    per_device_train_batch_size=self.batch_size,
-                    gradient_accumulation_steps=self.grad_steps,
-                    #gradient_checkpointing=True,
-                    num_train_epochs=self.epochs,
-                    weight_decay=self.weight_decay,
-                    warmup_steps=self.warmup_steps,
-                    logging_steps=10,
-                    remove_unused_columns=False,
-                    bf16=True
-                )                
+            training_args_final = TrainingArguments(
+                output_dir=output_dir_final,
+                eval_strategy="no",
+                save_strategy="no",
+                learning_rate=self.learning_rate,
+                per_device_train_batch_size=self.batch_size,
+                gradient_accumulation_steps=self.grad_steps,
+                #gradient_checkpointing=True,
+                num_train_epochs=self.epochs,
+                weight_decay=self.weight_decay,
+                warmup_steps=self.warmup_steps,
+                logging_steps=10,
+                remove_unused_columns=False,
+                bf16=True
+            )                
 
             trainer_final = MultiTaskTrainer(
                 model=modelo_final,
@@ -493,8 +527,8 @@ class BaseTransformerPipeline(ABC):
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
             modelo_final.to(device)
 
-            preds_grupo_list, preds_caja_list, real_grupo_list, real_caja_list = self.evaluar_por_batches(modelo_final, test_dataset, batch_size=4, device=device)
-
+            preds_grupo_list, preds_caja_list, real_grupo_list, real_caja_list, probs_grupo_arr, probs_caja_arr = self.evaluar_por_batches(modelo_final, test_dataset, batch_size=4, device=device)
+            
             print("\nReporte Final - GRUPO:\n")
             etiquetas_grupo = np.arange(len(le_grupo.classes_))
             reporte_grupo_str = classification_report(real_grupo_list, preds_grupo_list, labels=etiquetas_grupo, target_names=le_grupo.classes_, zero_division=0)
@@ -520,20 +554,23 @@ class BaseTransformerPipeline(ABC):
             )
             print(reporte_caja_str)
 
-            mlflow.log_metric("cv_mean_acc_grupo", float(np.mean(cv_accuracies_grupo)))
-            mlflow.log_metric("cv_std_acc_grupo", float(np.std(cv_accuracies_grupo)))
-            mlflow.log_metric("cv_mean_acc_caja", float(np.mean(cv_accuracies_caja)))
-            mlflow.log_metric("cv_std_acc_caja", float(np.std(cv_accuracies_caja)))
-            mlflow.log_metric("holdout_acc_grupo", reporte_grupo_dict["accuracy"])
-            mlflow.log_metric("holdout_acc_caja", reporte_caja_dict["accuracy"])
+            auc_grupo = roc_auc_score(real_grupo_list, probs_grupo_arr, multi_class='ovr', average='macro')
+            auc_caja = roc_auc_score(real_caja_list, probs_caja_arr, multi_class='ovr', average='macro')
 
-            mlflow.log_metric("holdout_f1_grupo", reporte_grupo_dict["weighted avg"]["f1-score"])
-            mlflow.log_metric("holdout_recall_grupo", reporte_grupo_dict["weighted avg"]["recall"])
-            mlflow.log_metric("holdout_precision_grupo", reporte_grupo_dict["weighted avg"]["precision"])
+            # Registrar en MLflow (Hold-out Validation)
+            mlflow.log_metric("test_acc_grupo", reporte_grupo_dict["accuracy"])
+            mlflow.log_metric("test_f1_macro_grupo", reporte_grupo_dict["macro avg"]["f1-score"])
+            mlflow.log_metric("test_f1_weighted_grupo", reporte_grupo_dict["weighted avg"]["f1-score"])
+            mlflow.log_metric("test_recall_grupo", reporte_grupo_dict["weighted avg"]["recall"])
+            mlflow.log_metric("test_precision_grupo", reporte_grupo_dict["weighted avg"]["precision"])
+            mlflow.log_metric("test_auc_roc_grupo", auc_grupo)
             
-            mlflow.log_metric("holdout_f1_caja", reporte_caja_dict["weighted avg"]["f1-score"])
-            mlflow.log_metric("holdout_recall_caja", reporte_caja_dict["weighted avg"]["recall"])
-            mlflow.log_metric("holdout_precision_caja", reporte_caja_dict["weighted avg"]["precision"])
+            mlflow.log_metric("test_acc_caja", reporte_caja_dict["accuracy"])
+            mlflow.log_metric("test_f1_macro_caja", reporte_caja_dict["macro avg"]["f1-score"])
+            mlflow.log_metric("test_f1_weighted_caja", reporte_caja_dict["weighted avg"]["f1-score"])
+            mlflow.log_metric("test_recall_caja", reporte_caja_dict["weighted avg"]["recall"])
+            mlflow.log_metric("test_precision_caja", reporte_caja_dict["weighted avg"]["precision"])
+            mlflow.log_metric("test_auc_roc_caja", auc_caja)
 
             mlflow.log_dict(reporte_grupo_dict, "reporte_clasificacion_grupo.json")
             mlflow.log_dict(reporte_caja_dict, "reporte_clasificacion_caja.json")
@@ -544,6 +581,14 @@ class BaseTransformerPipeline(ABC):
                 clases_grupo=le_grupo.classes_,
                 real_caja=real_caja_list, 
                 preds_caja=preds_caja_list, 
+                clases_caja=le_caja.classes_
+            )
+            self.plot_roc_curve(
+                real_grupo=real_grupo_list,
+                probs_grupo=probs_grupo_arr,
+                real_caja=real_caja_list,
+                probs_caja=probs_caja_arr,
+                clases_grupo=le_grupo.classes_,
                 clases_caja=le_caja.classes_
             )
 
