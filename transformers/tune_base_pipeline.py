@@ -173,14 +173,14 @@ class BaseTransformerPipeline(ABC):
     def get_feature_extractor(self):
         return AutoFeatureExtractor.from_pretrained(self.nombre_modelo)
 
-    def get_device():
+    def get_device(self):
         if torch.cuda.is_available():
             return torch.device('cuda')
         elif torch.backends.mps.is_available():
             return torch.device('mps')
         return torch.device('cpu')
     
-    def clear_memory():
+    def clear_memory(self):
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         elif torch.backends.mps.is_available():
