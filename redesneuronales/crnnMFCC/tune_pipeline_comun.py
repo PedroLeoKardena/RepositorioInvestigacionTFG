@@ -72,6 +72,19 @@ class PipelineComunCRNN(ABC):
         tiempo_actual = pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
         self.nombre_modelo_guardado = f"CRNN_MFCC_{self.nombre_dataset}_{tiempo_actual}"
 
+    def get_device():
+        if torch.cuda.is_available():
+            return torch.device('cuda')
+        elif torch.backends.mps.is_available():
+            return torch.device('mps')
+        return torch.device('cpu')
+    
+    def clear_memory():
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        elif torch.backends.mps.is_available():
+            torch.mps.empty_cache()
+
     def obtener_datasets(self):
         ruta_datos = self.ruta_base / "datos_entrenamiento"
         ruta_train = ruta_datos / self.pkl_train
@@ -152,7 +165,7 @@ class PipelineComunCRNN(ABC):
         ruta_db = ruta_resultados / "resultados_voces.db"
         os.makedirs(ruta_resultados, exist_ok=True)
 
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = self.get_device()
         print(f"Dispositivo detectado: {device}")
 
         mlflow.set_tracking_uri(f"sqlite:///{ruta_db.as_posix()}")
@@ -300,7 +313,7 @@ class PipelineComunCRNN(ABC):
                 cv_val_f1_caja.append(mejor_f1_caja_fold)
 
                 del modelo, optimizador
-                torch.cuda.empty_cache()
+                self.clear_memory()
                 gc.collect()
 
             mlflow.log_metric("cv_mean_val_loss", np.mean(cv_val_losses))

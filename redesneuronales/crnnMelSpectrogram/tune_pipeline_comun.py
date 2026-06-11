@@ -91,6 +91,20 @@ class PipelineComunCRNN(ABC):
 
         return df_train, df_test
 
+    def get_device():
+        if torch.cuda.is_available():
+            return torch.device('cuda')
+        elif torch.backends.mps.is_available():
+            return torch.device('mps')
+        return torch.device('cpu')
+    
+    def clear_memory():
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        elif torch.backends.mps.is_available():
+            torch.mps.empty_cache()
+
+    
     def plot_confusion_matrix(self, real_grupo, preds_grupo, real_caja, preds_caja, clases_grupo, clases_caja):
         fig, axes = plt.subplots(1, 2, figsize=(16, 6))
         fig.suptitle(f"Matrices de Confusión - {self.nombre_modelo_guardado}", fontsize=16, fontweight="bold")
@@ -159,7 +173,7 @@ class PipelineComunCRNN(ABC):
         ruta_db = ruta_resultados / "resultados_voces.db"
         os.makedirs(ruta_resultados, exist_ok=True)
 
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = self.get_device()
         print(f"Dispositivo detectado: {device}")
 
         mlflow.set_tracking_uri(f"sqlite:///{ruta_db.as_posix()}")
@@ -309,7 +323,7 @@ class PipelineComunCRNN(ABC):
                 cv_val_f1_caja.append(mejor_f1_caja_fold)
                 
                 del modelo, optimizador
-                torch.cuda.empty_cache()
+                self.clear_memory()
                 gc.collect()
                         
             mlflow.log_metric("cv_mean_val_loss", np.mean(cv_val_losses))

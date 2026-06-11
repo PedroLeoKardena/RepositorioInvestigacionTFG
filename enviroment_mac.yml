@@ -1,0 +1,32 @@
+name: env_audio
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - lightgbm
+  - python=3.10
+  - pip
+  - ffmpeg
+  - pytorch
+  - torchaudio
+  - pip:
+        - librosa
+        - pydub
+        - soundfile
+        - noisereduce
+        - deepfilternet
+        - pyannote.audio==3.1.1
+        - ipykernel
+        - seaborn
+        - pandas
+        - numpy
+        - matplotlib
+        - scikit-learn
+        - joblib
+        - transformers
+        - datasets
+        - accelerate>=1.1.0
+        - iterative-stratification
+        - huggingface_hub
+        - mlflow

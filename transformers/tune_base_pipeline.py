@@ -207,6 +207,19 @@ class BaseTransformerPipeline(ABC):
     def get_feature_extractor(self):
         return AutoFeatureExtractor.from_pretrained(self.nombre_modelo)
 
+    def get_device():
+        if torch.cuda.is_available():
+            return torch.device('cuda')
+        elif torch.backends.mps.is_available():
+            return torch.device('mps')
+        return torch.device('cpu')
+    
+    def clear_memory():
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        elif torch.backends.mps.is_available():
+            torch.mps.empty_cache()
+    
     def preprocesar_batch(self, batch, ruta_audios, feature_extractor):
         audio_arrays = []
         for nombre_archivo in batch["nombre_archivo"]:
@@ -447,7 +460,7 @@ class BaseTransformerPipeline(ABC):
                 trainer_cv.train()
 
                 modelo_cv.eval()
-                device = 'cuda' if torch.cuda.is_available() else 'cpu'
+                device = self.get_device()
                 modelo_cv.to(device)
 
                 preds_grupo, preds_caja, real_grupo, real_caja, _, _ = self.evaluar_por_batches(modelo_cv, val_fold_ds, batch_size=4, device=device)
@@ -470,7 +483,7 @@ class BaseTransformerPipeline(ABC):
                 print(f"Resultados Fold {fold_val} -> Accuracy Grupo: {acc_grupo:.4f} | Accuracy Caja: {acc_caja:.4f}")
                 
                 del trainer_cv, modelo_cv
-                torch.cuda.empty_cache()
+                self.clear_memory()
                 gc.collect()
                 if os.path.exists(output_dir_cv):
                     shutil.rmtree(output_dir_cv)
@@ -524,7 +537,9 @@ class BaseTransformerPipeline(ABC):
 
             print("\nEvaluando Modelo Final sobre el conjunto de TEST (Hold-out Validation / Preproducción)...")
             modelo_final.eval()
-            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            device = self.get_device()
+
+            print(f"Trabajando con {device}")
             modelo_final.to(device)
 
             preds_grupo_list, preds_caja_list, real_grupo_list, real_caja_list, probs_grupo_arr, probs_caja_arr = self.evaluar_por_batches(modelo_final, test_dataset, batch_size=4, device=device)
