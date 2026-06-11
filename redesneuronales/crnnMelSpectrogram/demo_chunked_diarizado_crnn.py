@@ -147,14 +147,14 @@ lr_adam 0.001
 #del overfitting. Ponemos a 0.3
 
 
+HIDDEN_SIZE = 128
 BATCH_SIZE = 32
-HIDDEN_SIZE = 256
-NUM_LAYERS_LSTM = 2
+NUM_LAYERS_LSTM = 1
 ALPHA_LEAKY_RELU = 0.01
-IS_BIDIRECTIONAL = True 
+IS_BIDIRECTIONAL = False 
 DROPOUT = 0.0
+NUM_EPOCHS = 20 
 LR_ADAM = 0.001
-NUM_EPOCHS = 50
 
 if __name__ == "__main__":
     pipeline = PipelineComunCRNN(

@@ -39,12 +39,12 @@ No vamos a tunear más este modelo, ya que no parece que los cambios en los hipe
 
 
 #Bajamos el valor de LR y dejamos los demas ugual. A la siguiente probar a aumentar numero de epochs y numero warmup_steps.
-LR = 2e-5
+LR = 3e-5
 BATCH_SIZE = 4
-GRAD_STEPS = 4
-EPOCHS = 8
+GRAD_STEPS = 2
+EPOCHS = 5
 WEIGHT_DECAY = 0.01
-WARMUP_STEPS = 250
+WARMUP_STEPS = 100
 
 class Wav2Vec2DiarizadoPipeline(BaseTransformerPipeline):
     @property

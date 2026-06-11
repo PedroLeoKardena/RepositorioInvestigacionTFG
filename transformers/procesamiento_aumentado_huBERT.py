@@ -76,10 +76,10 @@ warmup_steps 250
 
 LR = 3e-5
 BATCH_SIZE = 4
-GRAD_STEPS = 4
-EPOCHS = 8
+GRAD_STEPS = 2
+EPOCHS = 5
 WEIGHT_DECAY = 0.01
-WARMUP_STEPS = 250
+WARMUP_STEPS = 100
 
 
 class HubertAugmentedPipeline(BaseTransformerPipeline):
