@@ -91,7 +91,7 @@ if __name__ == "__main__":
     warnings.filterwarnings("ignore")
     ruta_base = Path(__file__).resolve().parent.parent.parent
     ruta_entrenamiento = ruta_base / "datos_entrenamiento"
-    ruta_audios = ruta_base / "audios_chunks_diarizado"
+    ruta_audios = ruta_base / "audios_chunks_diarizados"
 
     print("=== EXTRACCIÓN DE MEL SPECTROGRAMS — AUDIOS CHUNKEADOS ===\n")
 

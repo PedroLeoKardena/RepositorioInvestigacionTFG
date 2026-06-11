@@ -9,7 +9,7 @@ dependencies:
   - python=3.10
   - pip
   - ffmpeg
-  - pytorch
+  - pytorch>=2.4.0
   - torchaudio
   - pytorch-cuda=12.1 
   - pip:

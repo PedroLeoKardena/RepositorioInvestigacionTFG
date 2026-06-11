@@ -1,8 +1,9 @@
 Primero: Ejecutamos dividir_dataset.
 Segundo: Ejecutamos crear_audios_diarizados (no es realmente necesario dividir el dataset).
-diarizacion_reporte -> diarizacion_extraccion 
+diarizacion_reporte -> diarizacion_extraccion (si de base se tiene el reporte diarizado se puede ejecutar 
+la extraccion de audios diarizados de manera directa)
 
-Tercero: Generadores caracteristicas
+Tercero: Generadores caracteristicas (lo vamos a quitar asi que pasamos)
 Cuarto: Generar datasets
 Orden generación datasets: generar_dataset_chunkeado -> generar_dataset_chunkeado_aumentado -> generar_dataset_chunkeado_diarizado -> generar_dataset_chunkeado_aumentado_diarizado
 
