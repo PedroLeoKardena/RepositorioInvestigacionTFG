@@ -19,7 +19,7 @@ def crear_divisiones():
         print(f"Error: no se encontró la base de datos 'datos_entrada.csv'")
         return
     
-
+    todas_columnas = pd.get_dummies(df[['grupo', 'caja_toracica']]).columns
     y_strat = pd.get_dummies(df[['grupo', 'caja_toracica']]).values
 
     msss = MultilabelStratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
@@ -34,7 +34,7 @@ def crear_divisiones():
     mskf = MultilabelStratifiedKFold(n_splits=5, shuffle=True, random_state=42)
   
     # Volvemos a hacer las dummies solo para el conjunto de entrenamiento
-    y_train_strat = pd.get_dummies(df_train[['grupo', 'caja_toracica']]).values
+    y_train_strat = pd.get_dummies(df_train[['grupo', 'caja_toracica']]).reindex(columns=todas_columnas, fill_value=0).values
     
     # Asignamos a cada audio de entrenamiento un fold
     for fold_idx, (_, val_idx) in enumerate(mskf.split(df_train, y_train_strat)):
@@ -48,6 +48,13 @@ def crear_divisiones():
     print(f"Tamaño del conjunto de entrenamiento: {len(df_train)}")
     print(f"Tamaño del conjunto de prueba: {len(df_test)}")
     
+    for col in ['grupo', 'caja_toracica']:
+        unseen = set(df_test[col].unique()) - set(df_train[col].unique())
+        if unseen:
+            print(f"⚠️  Clases en test no vistas en train ({col}): {unseen}")
+        else:
+            print(f"✅  {col}: todas las clases de test están en train")
+
     return df_train, df_test
 
 if __name__ == "__main__":
