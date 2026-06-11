@@ -23,43 +23,9 @@ from transformers import (
     AutoFeatureExtractor,
     HubertModel,
     Wav2Vec2Model,
-    WhisperModel,
     TrainingArguments,
     Trainer
 )
-
-class WhisperMultiTask(nn.Module):
-    def __init__(self, nombre_modelo, num_labels_grupo, num_labels_caja):
-        super().__init__()
-        self.whisper = WhisperModel.from_pretrained(nombre_modelo, use_safetensors=True, use_cache=False)
-
-        # Congelamos las primeras capas de convolucion extractoras:
-        for param in self.whisper.encoder.conv1.parameters():
-            param.requires_grad = False
-        for param in self.whisper.encoder.conv2.parameters():
-            param.requires_grad = False
-
-        # El tamaño oculto en Whisper se llama d_model
-        hidden_size = self.whisper.config.d_model
-        
-        self.classifier_grupo = nn.Linear(hidden_size, num_labels_grupo)
-        self.classifier_caja = nn.Linear(hidden_size, num_labels_caja)
-
-    def gradient_checkpointing_enable(self, **kwargs):
-        self.whisper.gradient_checkpointing_enable(**kwargs)
-
-
-    def forward(self, input_features, attention_mask=None, **kwargs):
-        #Pasamos los datos SOLO por el encoder, el decoder es para escritura
-        outputs = self.whisper.encoder(input_features, attention_mask=attention_mask)
-        
-        hidden_states = outputs.last_hidden_state
-        pooled_output = hidden_states.mean(dim=1)
-        
-        logits_grupo = self.classifier_grupo(pooled_output)
-        logits_caja = self.classifier_caja(pooled_output)
-        
-        return {"logits_grupo": logits_grupo, "logits_caja": logits_caja}
     
 class HubertMultiTask(nn.Module):
     def __init__(self, nombre_modelo, num_labels_grupo, num_labels_caja):
@@ -432,8 +398,8 @@ class BaseTransformerPipeline(ABC):
 
                 training_args_cv = TrainingArguments(
                     output_dir=output_dir_cv,
-                    eval_strategy="epoch",
-                    save_strategy="epoch",
+                    eval_strategy="no",
+                    save_strategy="no",
                     load_best_model_at_end=True,
                     save_total_limit=1,
                     learning_rate=self.learning_rate,
