@@ -130,17 +130,14 @@ lr_adam 0.001
 num_epochs 20
 
 """
-
-#En este caso, lo que sucede es que tambien hay subida del val_loss. Vamos a dejar el numero de hidden_size, aumentar el batch_size a 32.
-#Luego aumentamos el dropout a 0.3. Aumentamos el num_epochs de 20 a 50. LR_adam lo pasamos de 0.001 a 0.0005
-BATCH_SIZE = 64
-HIDDEN_SIZE = 512
-NUM_LAYERS_LSTM = 2
+HIDDEN_SIZE = 128
+BATCH_SIZE = 32
+NUM_LAYERS_LSTM = 1
 ALPHA_LEAKY_RELU = 0.01
-IS_BIDIRECTIONAL = True 
+IS_BIDIRECTIONAL = False
 DROPOUT = 0.0
-LR_ADAM = 0.001
 NUM_EPOCHS = 20
+LR_ADAM = 0.001
 
 if __name__ == "__main__":
     pipeline = PipelineComunCRNN(
