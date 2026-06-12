@@ -79,14 +79,14 @@ Vamos a dejar dichos hiperparámetros.
 
 LR = 3e-5
 BATCH_SIZE = 4
-GRAD_STEPS = 2
-EPOCHS = 5
+GRAD_STEPS = 4
+EPOCHS = 10
 WEIGHT_DECAY = 0.01
-WARMUP_STEPS = 100
+WARMUP_STEPS = 250
 
 class HubertAugmentedDiarizadoPipeline(BaseTransformerPipeline):
     @property
-    def max_audio_length(self): return 16000
+    def max_audio_length(self): return 160000
     @property
     def nombre_dataset(self): return "Aumentado_Diarizado"
     @property

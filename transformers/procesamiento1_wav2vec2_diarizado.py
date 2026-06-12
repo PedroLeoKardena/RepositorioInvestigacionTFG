@@ -48,7 +48,7 @@ WARMUP_STEPS = 100
 
 class Wav2Vec2DiarizadoPipeline(BaseTransformerPipeline):
     @property
-    def max_audio_length(self): return 16000
+    def max_audio_length(self): return 160000
     @property
     def nombre_dataset(self): return "Diarizado"
 

@@ -400,8 +400,6 @@ class BaseTransformerPipeline(ABC):
                     output_dir=output_dir_cv,
                     eval_strategy="no",
                     save_strategy="no",
-                    load_best_model_at_end=True,
-                    save_total_limit=1,
                     learning_rate=self.learning_rate,
                     per_device_train_batch_size=self.batch_size,
                     per_device_eval_batch_size=self.batch_size,
