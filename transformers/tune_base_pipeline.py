@@ -33,6 +33,9 @@ class HubertMultiTask(nn.Module):
         self.hubert = HubertModel.from_pretrained(nombre_modelo, use_safetensors=True)
         for param in self.hubert.feature_extractor.parameters():
             param.requires_grad = False
+        for layer in self.hubert.encoder.layers[:6]:
+            for param in layer.parameters():
+                param.requires_grad = False
 
         hidden_size = self.hubert.config.hidden_size
         self.classifier_grupo = nn.Linear(hidden_size, num_labels_grupo)
@@ -56,6 +59,9 @@ class Wav2Vec2MultiTask(nn.Module):
         self.wav2vec2 = Wav2Vec2Model.from_pretrained(nombre_modelo, use_safetensors=True)
         for param in self.wav2vec2.feature_extractor.parameters():
             param.requires_grad = False
+        for layer in self.wav2vec2.encoder.layers[:6]:
+            for param in layer.parameters():
+                param.requires_grad = False
 
         hidden_size = self.wav2vec2.config.hidden_size
         self.classifier_grupo = nn.Linear(hidden_size, num_labels_grupo)
@@ -366,6 +372,11 @@ class BaseTransformerPipeline(ABC):
 
         
 
+        device = self.get_device()
+        use_bf16 = device.type == 'cuda'
+        use_fp16 = device.type == 'mps'
+        print(f"Dispositivo: {device} | bf16={use_bf16} | fp16={use_fp16}")
+
         with mlflow.start_run(run_name=f"{self.nombre_run}_{self.nombre_dataset}"):
 
             mlflow.log_param("modelo", self.nombre_modelo)
@@ -409,9 +420,9 @@ class BaseTransformerPipeline(ABC):
                     warmup_steps=self.warmup_steps,
                     logging_steps=10,
                     remove_unused_columns=False,
-                    bf16=True
+                    bf16=use_bf16,
+                    fp16=use_fp16,
                 )
-                
 
                 trainer_cv = MultiTaskTrainer(
                     model=modelo_cv,
@@ -424,7 +435,6 @@ class BaseTransformerPipeline(ABC):
                 trainer_cv.train()
 
                 modelo_cv.eval()
-                device = self.get_device()
                 modelo_cv.to(device)
 
                 preds_grupo, preds_caja, real_grupo, real_caja, _, _ = self.evaluar_por_batches(modelo_cv, val_fold_ds, batch_size=4, device=device)
@@ -488,8 +498,9 @@ class BaseTransformerPipeline(ABC):
                 warmup_steps=self.warmup_steps,
                 logging_steps=10,
                 remove_unused_columns=False,
-                bf16=True
-            )                
+                bf16=use_bf16,
+                fp16=use_fp16,
+            )
 
             trainer_final = MultiTaskTrainer(
                 model=modelo_final,
@@ -501,8 +512,6 @@ class BaseTransformerPipeline(ABC):
 
             print("\nEvaluando Modelo Final sobre el conjunto de TEST (Hold-out Validation / Preproducción)...")
             modelo_final.eval()
-            device = self.get_device()
-
             print(f"Trabajando con {device}")
             modelo_final.to(device)
 
