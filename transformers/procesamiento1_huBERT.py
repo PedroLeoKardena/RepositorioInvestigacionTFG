@@ -3,10 +3,10 @@ from tune_base_pipeline import BaseTransformerPipeline, HubertMultiTask
 
 LR = 3e-5
 BATCH_SIZE = 4
-GRAD_STEPS = 4
-EPOCHS = 10
+GRAD_STEPS = 2
+EPOCHS = 5
 WEIGHT_DECAY = 0.01
-WARMUP_STEPS = 250
+WARMUP_STEPS = 100
 
 class HubertBaselinePipeline(BaseTransformerPipeline):
     @property
