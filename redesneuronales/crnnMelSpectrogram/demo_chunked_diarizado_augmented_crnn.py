@@ -4,14 +4,14 @@ pkl_train = "train_mels_chunked_aumentado_diarizado.pkl"
 pkl_test = "test_mels_chunked_aumentado_diarizado.pkl"
 
 #Hiperparámetros
-HIDDEN_SIZE = 128
-BATCH_SIZE = 32
-NUM_LAYERS_LSTM = 1
-ALPHA_LEAKY_RELU = 0.01
+HIDDEN_SIZE = 512
+BATCH_SIZE = 64
+NUM_LAYERS_LSTM = 2
+ALPHA_LEAKY_RELU = 0.0
 IS_BIDIRECTIONAL = True
-DROPOUT = 0.0
-NUM_EPOCHS = 20 
-LR_ADAM = 0.001
+DROPOUT = 0.15
+NUM_EPOCHS = 50 
+LR_ADAM = 0.0005
 
 if __name__ == "__main__":
     pipeline = PipelineComunCRNN(
