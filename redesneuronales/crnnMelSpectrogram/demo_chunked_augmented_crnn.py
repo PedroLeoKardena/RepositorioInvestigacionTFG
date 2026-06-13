@@ -14,7 +14,10 @@ DROPOUT = 0.0
 NUM_EPOCHS = 20
 LR_ADAM = 0.001
 
-En mlflow = CRNN_MelSpectrogram_chunked_hidden128
+En mlflow = CRNN_MelSpectrogram_chunked_aumentado_hidden128. RunID = 3bdd0b4690b443c9b2984d9df056570c
+
+Buscar run = attributes.run_id IN ("3bdd0b4690b443c9b2984d9df056570c")
+
 Aun que no presenta el mejor f1_macro para caja o grupo, si que presenta un mucho menor val_loss que los demás
 cv_mean_loss = 2.4719210561165204
 cv_mean_val_f1_grupo = 0.2840955099971446
@@ -30,6 +33,16 @@ DROPOUT = 0.0
 NUM_EPOCHS = 50
 LR_ADAM = 0.001
 
+Este tuneo era peor que el anterior. Presentaba un mayor loss y encima, un peor rendimiento. Run ID = 1b22700833d143f79ae3eb158ee07c91 
+Vamos a probar a bajar numero de epochs y dejar el leaky relu a 0.0:
+HIDDEN_SIZE = 128
+BATCH_SIZE = 32
+NUM_LAYERS_LSTM = 2
+ALPHA_LEAKY_RELU = 0.0
+IS_BIDIRECTIONAL = True
+DROPOUT = 0.0
+NUM_EPOCHS = 20
+LR_ADAM = 0.001
 """
 
 HIDDEN_SIZE = 128
@@ -38,7 +51,7 @@ NUM_LAYERS_LSTM = 2
 ALPHA_LEAKY_RELU = 0.0
 IS_BIDIRECTIONAL = True
 DROPOUT = 0.0
-NUM_EPOCHS = 50
+NUM_EPOCHS = 20
 LR_ADAM = 0.001
 
 if __name__ == "__main__":

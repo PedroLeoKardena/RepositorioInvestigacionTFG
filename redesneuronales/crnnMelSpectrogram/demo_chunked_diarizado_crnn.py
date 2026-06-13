@@ -157,7 +157,7 @@ DROPOUT = 0.0
 NUM_EPOCHS = 20
 LR_ADAM = 0.001
 
-En mlflow = CRNN_MelSpectrogram_chunked_hidden128
+En mlflow = CRNN_MelSpectrogram_chunked_hidden128 = 4f7c5ed022d1453a9f627a383337f962
 Presenta el mejor f1_macro para caja o grupo y un  menor val_loss que los demás.
 cv_mean_loss = 1.957083404858907
 cv_mean_val_f1_grupo = 0.33874221723643955
@@ -173,6 +173,17 @@ DROPOUT = 0.0
 NUM_EPOCHS = 50
 LR_ADAM = 0.001
 
+run_id = 7726e2ebb4fd41dc88fe93d955c9f097
+Esta ultima es una peor run. Probamos la siguiente config a continuacion:
+HIDDEN_SIZE = 128
+BATCH_SIZE = 32
+NUM_LAYERS_LSTM = 2
+ALPHA_LEAKY_RELU = 0.0
+IS_BIDIRECTIONAL = True
+DROPOUT = 0.0
+NUM_EPOCHS = 20
+LR_ADAM = 0.001
+
 """
 
 HIDDEN_SIZE = 128
@@ -181,7 +192,7 @@ NUM_LAYERS_LSTM = 2
 ALPHA_LEAKY_RELU = 0.0
 IS_BIDIRECTIONAL = True
 DROPOUT = 0.0
-NUM_EPOCHS = 50
+NUM_EPOCHS = 20
 LR_ADAM = 0.001
 
 if __name__ == "__main__":
