@@ -1,4 +1,4 @@
-name: env_audio
+name: env_audio_mac
 channels:
   - pytorch
   - conda-forge

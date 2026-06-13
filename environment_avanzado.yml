@@ -1,0 +1,33 @@
+name: env_audio_avanzado
+channels:
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - lightgbm
+  - python=3.10
+  - pip
+  - ffmpeg
+  - pip:
+      # Librerías de procesamiento clásico
+      - torch --index-url https://download.pytorch.org/whl/cu128
+      - torchaudio --index-url https://download.pytorch.org/whl/cu128
+      - librosa
+      - pydub
+      - soundfile
+      - noisereduce
+      - deepfilternet
+      - pyannote.audio==3.1.1
+      - ipykernel
+      - seaborn
+      - pandas
+      - numpy
+      - matplotlib
+      - scikit-learn
+      - joblib
+      - transformers>=5.0.0
+      - datasets
+      - accelerate>=1.1.0
+      - iterative-stratification
+      - huggingface_hub
+      - mlflow>=3.0.0
