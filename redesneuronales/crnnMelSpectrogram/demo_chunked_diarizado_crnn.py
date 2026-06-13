@@ -146,15 +146,43 @@ lr_adam 0.001
 #Tambien aumentamos el dropout, ya que el val loss sube mientras que el train loss baja. Dropout es lo que permite trabajar en contra
 #del overfitting. Ponemos a 0.3
 
+"""
+Después de los tuneos básicos, el mejor tuneo es el siguiente:
+HIDDEN_SIZE = 128
+BATCH_SIZE = 32
+NUM_LAYERS_LSTM = 1
+ALPHA_LEAKY_RELU = 0.01
+IS_BIDIRECTIONAL = True
+DROPOUT = 0.0
+NUM_EPOCHS = 20
+LR_ADAM = 0.001
 
-HIDDEN_SIZE = 512
-BATCH_SIZE = 64
+En mlflow = CRNN_MelSpectrogram_chunked_hidden128
+Presenta el mejor f1_macro para caja o grupo y un  menor val_loss que los demás.
+cv_mean_loss = 1.957083404858907
+cv_mean_val_f1_grupo = 0.33874221723643955
+cv_mean_val_f1_caja = 0.23628785436830518
+
+Siguiente tuneo a probar: Ponemos 2 layers, probamos un leaky rely de 0.0 y un n_epochs de 50
+HIDDEN_SIZE = 128
+BATCH_SIZE = 32
 NUM_LAYERS_LSTM = 2
 ALPHA_LEAKY_RELU = 0.0
 IS_BIDIRECTIONAL = True
-DROPOUT = 0.15
-NUM_EPOCHS = 50 
-LR_ADAM = 0.0005
+DROPOUT = 0.0
+NUM_EPOCHS = 50
+LR_ADAM = 0.001
+
+"""
+
+HIDDEN_SIZE = 128
+BATCH_SIZE = 32
+NUM_LAYERS_LSTM = 2
+ALPHA_LEAKY_RELU = 0.0
+IS_BIDIRECTIONAL = True
+DROPOUT = 0.0
+NUM_EPOCHS = 50
+LR_ADAM = 0.001
 
 if __name__ == "__main__":
     pipeline = PipelineComunCRNN(

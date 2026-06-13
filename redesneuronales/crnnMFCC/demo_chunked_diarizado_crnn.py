@@ -130,14 +130,14 @@ lr_adam 0.001
 num_epochs 20
 
 """
-HIDDEN_SIZE = 512
+HIDDEN_SIZE = 256
 BATCH_SIZE = 64
 NUM_LAYERS_LSTM = 2
-ALPHA_LEAKY_RELU = 0.01
+ALPHA_LEAKY_RELU = 0.0
 IS_BIDIRECTIONAL = True
-DROPOUT = 0.15
-NUM_EPOCHS = 50
-LR_ADAM = 0.0005
+DROPOUT = 0.1
+NUM_EPOCHS = 20
+LR_ADAM = 0.001
 
 if __name__ == "__main__":
     pipeline = PipelineComunCRNN(
