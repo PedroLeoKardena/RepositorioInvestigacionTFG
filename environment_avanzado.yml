@@ -1,6 +1,5 @@
 name: env_audio_avanzado
 channels:
-  - pytorch
   - nvidia
   - conda-forge
   - defaults
@@ -9,11 +8,10 @@ dependencies:
   - python=3.10
   - pip
   - ffmpeg
-  - pytorch>=2.4.0
-  - torchaudio
-  - pytorch-cuda=12.4
   - pip:
       # Librerías de procesamiento clásico
+      - torch --index-url https://download.pytorch.org/whl/cu128
+      - torchaudio --index-url https://download.pytorch.org/whl/cu128
       - librosa
       - pydub
       - soundfile

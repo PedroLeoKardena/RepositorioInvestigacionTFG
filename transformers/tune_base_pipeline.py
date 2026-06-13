@@ -8,6 +8,9 @@ import torch
 import torch.nn as nn
 import gc
 
+if torch.cuda.is_available():
+    os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
@@ -189,6 +192,7 @@ class BaseTransformerPipeline(ABC):
     def clear_memory(self):
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
+            torch.cuda.synchronize()
         elif torch.backends.mps.is_available():
             torch.mps.empty_cache()
     
@@ -373,7 +377,7 @@ class BaseTransformerPipeline(ABC):
         
 
         device = self.get_device()
-        use_bf16 = device.type == 'cuda'
+        use_bf16 = device.type == 'cuda' and torch.cuda.is_bf16_supported()
         use_fp16 = device.type == 'mps'
         print(f"Dispositivo: {device} | bf16={use_bf16} | fp16={use_fp16}")
 
@@ -438,6 +442,7 @@ class BaseTransformerPipeline(ABC):
                 modelo_cv.to(device)
 
                 preds_grupo, preds_caja, real_grupo, real_caja, _, _ = self.evaluar_por_batches(modelo_cv, val_fold_ds, batch_size=4, device=device)
+                val_fold_ds.reset_format()
 
                 acc_grupo = sum(p == r for p, r in zip(preds_grupo, real_grupo)) / len(real_grupo)
                 acc_caja = sum(p == r for p, r in zip(preds_caja, real_caja)) / len(real_caja)
@@ -456,6 +461,7 @@ class BaseTransformerPipeline(ABC):
 
                 print(f"Resultados Fold {fold_val} -> Accuracy Grupo: {acc_grupo:.4f} | Accuracy Caja: {acc_caja:.4f}")
                 
+                modelo_cv.cpu()
                 del trainer_cv, modelo_cv
                 self.clear_memory()
                 gc.collect()
