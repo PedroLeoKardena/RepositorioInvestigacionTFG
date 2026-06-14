@@ -13,121 +13,56 @@ pkl_test = "test_mfcc_chunked_diarizado.pkl"
 #NUM_EPOCHS = 20 #Numero de epocas de entrenamiento.
 
 """
-Hiperparametros tuneo grupo: f1 = 0.835972573078311
-hidden_size 128
-batch_size 16
-num_capas_ocultas_lstm 1
-alpha_leaky_relu 0.01
-is_bidirectional False
-dropout 0.0
-num_epochs 20
+Después de los tuneos básicos, el mejor tuneo para grupo es el siguiente:
 
-Post-Tuneo: f1 grupo = 0.7846164874551971
+HIDDEN_SIZE = 256
+BATCH_SIZE = 64
+NUM_LAYERS_LSTM = 2
+ALPHA_LEAKY_RELU = 0.0
+IS_BIDIRECTIONAL = True
+DROPOUT = 0.15
+NUM_EPOCHS = 25
+LR_ADAM = 0.001
 
-hidden_size 128
-batch_size 32
-num_capas_ocultas_lstm 2
-alpha_leaky_relu 0.01
-is_bidirectional True
-dropout 0.3
-lr_adam 0.0005
-num_epochs 50
+RunID = b9f56b79280747b7a2fb918862694877
 
-#Vamos a subir el numero de capas ocultas a 256, vamos a probar LR_adam a 0.001 y lo demas igual
+Presenta uno de los mejores f1_macro para grupo, el mejor f1_macro para caja, además de un muy buen val_loss, 
+con un std alto que suele tender valores menores.
+cv_mean_loss = 1.9648182272911072
+cv_std_loss = 0.3030990735271277
+cv_mean_val_f1_grupo = 0.3476013096052434
+cv_mean_val_f1_caja = 0.2689190130085076
 
-Post-tuneo 2: f1 grupo = 0.7546929824561404. Ha empeorado otra vez.
-hidden_size 256
-batch_size 32
-num_capas_ocultas_lstm 2
-alpha_leaky_relu 0.01
-is_bidirectional True
-dropout 0.3
-lr_adam 0.001
-num_epochs 50
 
-Vamos a probar la configuración del mejor tuneo pero con epochs 50 y hidden_size 256, y con LR_adam a 0.0005.
+Siguiente tuneo:
+Quitamos el dropout, si aumenta mucho el loss en val y no mejora el rendimiento, lo volvemos a poner
+HIDDEN_SIZE = 256
+BATCH_SIZE = 64
+NUM_LAYERS_LSTM = 2
+ALPHA_LEAKY_RELU = 0.0
+IS_BIDIRECTIONAL = True
+DROPOUT = 0.0
+NUM_EPOCHS = 25
+LR_ADAM = 0.001
 
-Post-tuneo 3: f1 grupo = 0.7866329284750337. Sigue sin ser mejor que el primero. 
-hidden_size 256
-batch_size 32
-num_capas_ocultas_lstm 2
-alpha_leaky_relu 0.01
-is_bidirectional True
-dropout 0.0
-lr_adam 0.0005
-num_epochs 50
+run_id = 74e20bd14b4346c3aeba2b9237abcdbe
+cv_mean_loss = 1.959678914149602
+cv_std_loss = 0.326580201896546
+cv_mean_val_f1_grupo = 0.3080643286060253
+cv_mean_val_f1_caja = 0.1828525107144428
 
-Vamos a probar misma configuración exacta, pero con lr_adam 0.005 y batch_size 32.
 
-Post-tuneo 4: f1 grupo = 0.8801541425818882. Ha mejorado bastante. 
-hidden_size 128
-batch_size 32
-num_capas_ocultas_lstm 1
-alpha_leaky_relu 0.01
-is_bidirectional False
-dropout 0.0
-lr_adam 0.001
-num_epochs 20
+Ha empeorado basatante al quitar el dropout, ponemos mas.
 
-Vamos a probar a bajar el lr_adam de 0.001 a 0.0005.
+HIDDEN_SIZE = 256
+BATCH_SIZE = 64
+NUM_LAYERS_LSTM = 2
+ALPHA_LEAKY_RELU = 0.0
+IS_BIDIRECTIONAL = True
+DROPOUT = 0.3
+NUM_EPOCHS = 25
+LR_ADAM = 0.001
 
-Post-tuneo 5: f1 grupo = 0.8144848484848485. De este modo podemos llegar a la conclusión que el mejor lr_adam es 0.001.
-hidden_size 128
-batch_size 32
-num_capas_ocultas_lstm 1
-alpha_leaky_relu 0.01
-is_bidirectional False
-dropout 0.0
-lr_adam 0.001
-num_epochs 20
-
-Ahora vamos a probar a subir el dropout para intentar pelear contra el sobreajuste. Para este caso no solo analizaremos el f1, sino tambien el val_loss.
-Como queremos probar dropout distinto a 0.0, necesesitamos aumentar el numero de capas de la LSTM, ya que el dropout solo se aplica a la ultima capa.
-
-Post-tuneo 6: f1 grupo = 0.8020496894409938. Vamos que va a empeorado.
-hidden_size 128
-batch_size 32
-num_capas_ocultas_lstm 2
-alpha_leaky_relu 0.01
-is_bidirectional False
-dropout 0.3
-lr_adam 0.001
-num_epochs 20
-
-Los resultados de val_loss tambien han empeorado, por lo que aumentar el dropout no ha resultado del todo beneficioso.
-De este modo, vamos a deajar el dropout a 0.0, el numero de capas a 1. Vamos a probar cambiando el valor de leaky_relu a 0.0.
-
-Post-tuneo 7: f1 grupo = 0.765765629719118
-hidden_size 128
-batch_size 32
-num_capas_ocultas_lstm 1
-alpha_leaky_relu 0.0
-is_bidirectional False
-dropout 0.0
-lr_adam 0.001
-num_epochs 20
-
-#Vamos a probar aumentando el hidden_size a 512 y el batch_size a 64, 2 capas de lstm y bidireccional. Si no mejora nos quedamos con post-tuneo 4.
-
-Post-tuneo 8: f1 grupo = 0.8078260869565217
-hidden_size 512
-batch_size 64
-num_capas_ocultas_lstm 2
-alpha_leaky_relu 0.0
-is_bidirectional True
-dropout 0.0
-lr_adam 0.001
-num_epochs 20
-
-Nos quedamos con la mejor configuración:
-hidden_size 128
-batch_size 32
-num_capas_ocultas_lstm 1
-alpha_leaky_relu 0.01
-is_bidirectional False
-dropout 0.0
-lr_adam 0.001
-num_epochs 20
 
 """
 HIDDEN_SIZE = 256
@@ -135,8 +70,8 @@ BATCH_SIZE = 64
 NUM_LAYERS_LSTM = 2
 ALPHA_LEAKY_RELU = 0.0
 IS_BIDIRECTIONAL = True
-DROPOUT = 0.1
-NUM_EPOCHS = 20
+DROPOUT = 0.3
+NUM_EPOCHS = 25
 LR_ADAM = 0.001
 
 if __name__ == "__main__":

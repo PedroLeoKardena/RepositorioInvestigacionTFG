@@ -54,9 +54,11 @@ BATCH_SIZE = 64
 NUM_LAYERS_LSTM = 2
 ALPHA_LEAKY_RELU = 0.0
 IS_BIDIRECTIONAL = True
-DROPOUT = 0.0
-NUM_EPOCHS = 20
+DROPOUT = 0.15
+NUM_EPOCHS = 25
 LR_ADAM = 0.001
+
+
 
 if __name__ == "__main__":
     pipeline = PipelineComunCRNN(

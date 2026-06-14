@@ -222,6 +222,8 @@ class PipelineComunCRNN(ABC):
                 optimizador = torch.optim.Adam(modelo.parameters(), lr=self.lr_adam)
 
                 mejor_val_loss_fold = float('inf')
+                mejor_f1_grupo_fold = 0.0
+                mejor_f1_caja_fold = 0.0
 
                 for epoca in range(self.num_epochs):
                     modelo.train()
@@ -301,7 +303,7 @@ class PipelineComunCRNN(ABC):
                     loss_val_media = loss_val_total / len(val_loader)
                     if loss_val_media < mejor_val_loss_fold:
                         mejor_val_loss_fold = loss_val_media
-                        mejor_f1_grupo_fold = f1_val_grupo
+                        mejor_f1_grupo_fold = f1_val_grupo  
                         mejor_f1_caja_fold = f1_val_caja
                     
                     print(f"Época {epoca+1}/{self.num_epochs} | Train Loss: {loss_train_media:.4f} | Val Loss: {loss_val_media:.4f}")
@@ -317,9 +319,12 @@ class PipelineComunCRNN(ABC):
                 gc.collect()
 
             mlflow.log_metric("cv_mean_val_loss", np.mean(cv_val_losses))
-            mlflow.log_metric("cv_std_val_loss", float(np.std(cv_val_losses)))
+            mlflow.log_metric("cv_std_val_loss", float(np.std(cv_val_losses, ddof=1)))
             mlflow.log_metric("cv_mean_val_f1_grupo", np.mean(cv_val_f1_grupo))
+            mlflow.log_metric("cv_std_val_f1_grupo", float(np.std(cv_val_f1_grupo, ddof=1)))
             mlflow.log_metric("cv_mean_val_f1_caja", np.mean(cv_val_f1_caja))
+            mlflow.log_metric("cv_std_val_f1_caja", float(np.std(cv_val_f1_caja, ddof=1)))
+
 
             if modo_tuning:
                 print(f"MODO TUNING FINALIZADO")

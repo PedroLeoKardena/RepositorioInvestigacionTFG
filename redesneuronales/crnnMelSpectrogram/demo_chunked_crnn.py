@@ -4,8 +4,6 @@ pkl_train = "train_mels_chunked.pkl"
 pkl_test = "test_mels_chunked.pkl"
 
 """
-TODO: voy a meter un tuneo, pero de los 4 primeros el mejor es este para los mfcc de mel:
-
 Después de los tuneos básicos, el mejor tuneo es el siguiente:
 HIDDEN_SIZE = 128
 BATCH_SIZE = 32
@@ -45,14 +43,16 @@ LR_ADAM = 0.001
 """
 
 #Hiperparámetros
-HIDDEN_SIZE = 128
-BATCH_SIZE = 32
+HIDDEN_SIZE = 256
+BATCH_SIZE = 64
 NUM_LAYERS_LSTM = 2
 ALPHA_LEAKY_RELU = 0.0
 IS_BIDIRECTIONAL = True
-DROPOUT = 0.0
-NUM_EPOCHS = 20
+DROPOUT = 0.15
+NUM_EPOCHS = 25
 LR_ADAM = 0.001
+
+
 
 if __name__ == "__main__":
     pipeline = PipelineComunCRNN(

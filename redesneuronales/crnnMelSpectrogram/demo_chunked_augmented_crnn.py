@@ -9,19 +9,20 @@ HIDDEN_SIZE = 128
 BATCH_SIZE = 32
 NUM_LAYERS_LSTM = 1
 ALPHA_LEAKY_RELU = 0.01
-IS_BIDIRECTIONAL = True
+IS_BIDIRECTIONAL = False
 DROPOUT = 0.0
 NUM_EPOCHS = 20
 LR_ADAM = 0.001
 
-En mlflow = CRNN_MelSpectrogram_chunked_aumentado_hidden128. RunID = 3bdd0b4690b443c9b2984d9df056570c
+En mlflow = CRNN_MelSpectrogram_chunked_aumentado_hidden128. RunID = 3c3fb3ceabc045c7b948adae3b9b9552
 
-Buscar run = attributes.run_id IN ("3bdd0b4690b443c9b2984d9df056570c")
+Buscar run = attributes.run_id IN ("3c3fb3ceabc045c7b948adae3b9b9552")
 
-Aun que no presenta el mejor f1_macro para caja o grupo, si que presenta un mucho menor val_loss que los demás
-cv_mean_loss = 2.4719210561165204
-cv_mean_val_f1_grupo = 0.2840955099971446
-cv_mean_val_f1_caja = 0.1815317779731314
+Aun que no presenta el absoluto mejor f1_macro para grupo, si que presenta un mucho menor val_loss que los demás
+que presentan un f1_macro equiparable. Si presenta el mejor de caja.
+cv_mean_loss = 2.423198068672027
+cv_mean_val_f1_grupo = 0.2820297311359166
+cv_mean_val_f1_caja = 0.20612217438134217
 
 Siguiente tuneo a probar: Ponemos 2 layers, probamos un leaky rely de 0.0 y un n_epochs de 50
 HIDDEN_SIZE = 128
@@ -45,14 +46,15 @@ NUM_EPOCHS = 20
 LR_ADAM = 0.001
 """
 
-HIDDEN_SIZE = 128
-BATCH_SIZE = 32
+HIDDEN_SIZE = 256
+BATCH_SIZE = 64
 NUM_LAYERS_LSTM = 2
 ALPHA_LEAKY_RELU = 0.0
 IS_BIDIRECTIONAL = True
-DROPOUT = 0.0
-NUM_EPOCHS = 20
+DROPOUT = 0.15
+NUM_EPOCHS = 25
 LR_ADAM = 0.001
+
 
 if __name__ == "__main__":
     pipeline = PipelineComunCRNN(
