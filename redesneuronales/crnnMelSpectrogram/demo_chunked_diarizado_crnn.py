@@ -114,6 +114,47 @@ IS_BIDIRECTIONAL = False
 DROPOUT = 0.0
 NUM_EPOCHS = 20
 LR_ADAM = 0.0005
+
+
+run_id = 060bd9a813ea4ab28f2bf377c51118ea
+cv_mean_loss = 1.889265093008677
+cv_std_val_loss = 0.14185951485946302
+cv_mean_val_f1_grupo = 0.32054778229857844
+cv_mean_val_f1_caja = 0.25635988227143036
+
+
+Pues nos vamos a quedar con esta configuración para la caja:
+
+FINAL CAJA:
+HIDDEN_SIZE = 128
+BATCH_SIZE = 32
+NUM_LAYERS_LSTM = 1
+ALPHA_LEAKY_RELU = 0.025
+IS_BIDIRECTIONAL = False
+DROPOUT = 0.0
+NUM_EPOCHS = 20
+LR_ADAM = 0.0005
+
+run_id = 060bd9a813ea4ab28f2bf377c51118ea
+cv_mean_loss = 1.889265093008677
+cv_std_val_loss = 0.14185951485946302
+cv_mean_val_f1_caja = 0.25635988227143036
+
+
+FINAL GRUPO:
+HIDDEN_SIZE = 128
+BATCH_SIZE = 32
+NUM_LAYERS_LSTM = 1
+ALPHA_LEAKY_RELU = 0.01
+IS_BIDIRECTIONAL = False
+DROPOUT = 0.0
+NUM_EPOCHS = 20
+LR_ADAM = 0.0005
+
+run_id = d06346a000694b8595c25f3d5ed79fbd
+cv_mean_loss = 1.9249431475003562
+cv_std_val_loss = 0.1323528074972972
+cv_mean_val_f1_grupo = 0.368520770777634
 """
 
 HIDDEN_SIZE = 128

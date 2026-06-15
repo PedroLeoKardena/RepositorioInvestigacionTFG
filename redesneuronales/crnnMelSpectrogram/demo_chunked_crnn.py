@@ -104,19 +104,60 @@ IS_BIDIRECTIONAL = True
 DROPOUT = 0.15
 NUM_EPOCHS = 25
 LR_ADAM = 0.001
-"""
 
-#Hiperparámetros
+run_id = 30cf08c0bb0940c0aa767846de85145e
+cv_mean_loss = 2.295552899837494
+cv_std_loss = 0.2819518106780656
+cv_mean_val_f1_grupo = 0.2562021400986448
+cv_mean_val_f1_caja = 0.18930295712715006
+
+
+Sigue siendo peor que la mejor configuración. Vamos a probar solamente a subir el num_layers a 3:
+
+HIDDEN_SIZE = 256
+BATCH_SIZE = 64
+NUM_LAYERS_LSTM = 3
+ALPHA_LEAKY_RELU = 0.0
+IS_BIDIRECTIONAL = True
+DROPOUT = 0.15
+NUM_EPOCHS = 25
+LR_ADAM = 0.001
+
+run_id = abd109f27c324a1aa13256384ff1ee88
+cv_mean_loss = 2.2647638654708864
+cv_std_loss = 0.23530313853731422
+cv_mean_val_f1_grupo = 0.24317301109519515
+cv_mean_val_f1_caja = 0.17211520268111552
+
+El redimiento es peor. Es por esto que vamos a dejar la configuración mejor como la final: 
+
+Configuración final:
 HIDDEN_SIZE = 256
 BATCH_SIZE = 64
 NUM_LAYERS_LSTM = 2
-ALPHA_LEAKY_RELU = 0.025
+ALPHA_LEAKY_RELU = 0.0
 IS_BIDIRECTIONAL = True
 DROPOUT = 0.15
 NUM_EPOCHS = 25
 LR_ADAM = 0.001
 
 
+En mlflow  = 69fc580605134e28903adb395b1f3a18
+cv_mean_loss = 2.2548182936509447
+cv_std_loss = 0.32366897305701176
+cv_mean_val_f1_grupo = 0.25929679300592073
+cv_mean_val_f1_caja = 0.2082380620949693
+"""
+
+#Hiperparámetros
+HIDDEN_SIZE = 256
+BATCH_SIZE = 64
+NUM_LAYERS_LSTM = 3
+ALPHA_LEAKY_RELU = 0.0
+IS_BIDIRECTIONAL = True
+DROPOUT = 0.15
+NUM_EPOCHS = 25
+LR_ADAM = 0.001
 
 if __name__ == "__main__":
     pipeline = PipelineComunCRNN(

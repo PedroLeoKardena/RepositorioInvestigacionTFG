@@ -101,13 +101,53 @@ DROPOUT = 0.3
 NUM_EPOCHS = 25
 LR_ADAM = 0.001
 
+run_id = cabd3ab5e98a4017bfdf769cadd3d80a
+cv_mean_loss = 2.175201999195038
+cv_std_loss = 0.2939554305914575
+cv_mean_val_f1_grupo = 0.32936036274328984
+cv_mean_val_f1_caja = 0.1864304488385071
+
+
+Sigue siendo peor que la mejor configuración, sobre todo en la caja. Vamos a probar a subir el num_layers a 3:
+HIDDEN_SIZE = 128
+BATCH_SIZE = 32
+NUM_LAYERS_LSTM = 3
+ALPHA_LEAKY_RELU = 0.0
+IS_BIDIRECTIONAL = True
+DROPOUT = 0.3
+NUM_EPOCHS = 25
+LR_ADAM = 0.001
+
+run_id = a6ef77e379224d9596bd29c29e9caf0d
+cv_mean_loss = 2.0333766704324696
+cv_std_loss = 0.32789496456245215
+cv_mean_val_f1_grupo = 0.3121347781546918
+cv_mean_val_f1_caja = 0.18197455928146353
+
+Como podemos ver el rendimiento es peor. Por este motivo vamos a dejar la configuración mejor como la final:
+
+HIDDEN_SIZE = 128
+BATCH_SIZE = 32
+NUM_LAYERS_LSTM = 2
+ALPHA_LEAKY_RELU = 0.0
+IS_BIDIRECTIONAL = True
+DROPOUT = 0.3
+NUM_EPOCHS = 25
+LR_ADAM = 0.001
+
+run_id = d80a0197984e404eaeaf2be31a033c1b
+cv_mean_loss = 2.158648055602634
+cv_std_loss = 0.17492375726904083
+cv_mean_val_f1_grupo = 0.3244227273187449
+cv_mean_val_f1_caja = 0.26337580099882024
+
 """
 
 #Hiperparámetros
 HIDDEN_SIZE = 128
 BATCH_SIZE = 32
-NUM_LAYERS_LSTM = 2
-ALPHA_LEAKY_RELU = 0.025
+NUM_LAYERS_LSTM = 3
+ALPHA_LEAKY_RELU = 0.0
 IS_BIDIRECTIONAL = True
 DROPOUT = 0.3
 NUM_EPOCHS = 25

@@ -113,11 +113,51 @@ Vamos a dejar el lr a 0.001 y vamos a probar un mayor alpha leaky relu que 0.01.
 HIDDEN_SIZE = 256
 BATCH_SIZE = 64
 NUM_LAYERS_LSTM = 2
-ALPHA_LEAKY_RELU = 0.025.
+ALPHA_LEAKY_RELU = 0.025
 IS_BIDIRECTIONAL = True
 DROPOUT = 0.3
 NUM_EPOCHS = 25
 LR_ADAM = 0.001
+
+run_id = e2ad022eb37941c1b8e640346e23f2e7
+cv_mean_loss = 2.400859580188179
+cv_std_loss = 0.263050438328603
+cv_mean_val_f1_grupo = 0.24543800097153584
+
+
+Observamos que los valores son peores. Vamos a probar con un num_layers_lstm=3:
+HIDDEN_SIZE = 256
+BATCH_SIZE = 64
+NUM_LAYERS_LSTM = 3
+ALPHA_LEAKY_RELU = 0.0
+IS_BIDIRECTIONAL = True
+DROPOUT = 0.3
+NUM_EPOCHS = 25
+LR_ADAM = 0.001
+
+run_id = a741229304894a7cbb47aedf7a80c672
+cv_mean_loss = 2.3018144221591137
+cv_std_loss = 0.261402717383965
+cv_mean_val_f1_grupo = 0.2528271453041754
+
+Sigue siendo peor que la mejor configuración, por lo que nos quedamos con esta como configuración final.
+
+Final Grupo:
+HIDDEN_SIZE = 256
+BATCH_SIZE = 64
+NUM_LAYERS_LSTM = 2
+ALPHA_LEAKY_RELU = 0.0
+IS_BIDIRECTIONAL = True
+DROPOUT = 0.3
+NUM_EPOCHS = 25
+LR_ADAM = 0.001
+
+Run id = 95a69bc2f9ce4051ad62e4e8f29bb28a
+cv_mean_loss = 2.4344986568334592
+cv_std_loss = 0.3678854928418136
+cv_mean_val_f1_grupo = 0.28812258187289097
+
+
 
 --------------------Para caja:------------------
 Para pelear con el loss vamos a aumentar el valor de dropout, además de poner un leaky_relu menor.
@@ -204,8 +244,8 @@ cv_mean_val_f1_caja = 0.22685674814518547
 #Primero probamos grupo luego caja.
 HIDDEN_SIZE = 256
 BATCH_SIZE = 64
-NUM_LAYERS_LSTM = 2
-ALPHA_LEAKY_RELU = 0.025
+NUM_LAYERS_LSTM = 3
+ALPHA_LEAKY_RELU = 0.0
 IS_BIDIRECTIONAL = True
 DROPOUT = 0.3
 NUM_EPOCHS = 25
