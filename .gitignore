@@ -12,9 +12,6 @@ datos_entrada.csv
 *.pkl
 *.m4a
 .virtual_documents/
-CLAUDE.md
-workflow_diarizacion.md
-lista_instalaciones_env_audio.txt
 __pycache__ 
 .ipynb_checkpoints
-.claude
+superfluo
