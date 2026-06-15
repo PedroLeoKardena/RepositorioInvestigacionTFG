@@ -474,9 +474,9 @@ class BaseTransformerPipeline(ABC):
             print(f"F1-Macro Medio Caja: {np.mean(cv_f1_macro_caja):.4f}")
 
             mlflow.log_metric("cv_mean_acc_grupo", float(np.mean(cv_accuracies_grupo)))
-            mlflow.log_metric("cv_std_acc_grupo", float(np.std(cv_accuracies_grupo)))
+            mlflow.log_metric("cv_std_acc_grupo", float(np.std(cv_accuracies_grupo, ddof=1)))
             mlflow.log_metric("cv_mean_acc_caja", float(np.mean(cv_accuracies_caja)))
-            mlflow.log_metric("cv_std_acc_caja", float(np.std(cv_accuracies_caja)))
+            mlflow.log_metric("cv_std_acc_caja", float(np.std(cv_accuracies_caja, ddof=1)))
             mlflow.log_metric("cv_mean_f1_macro_grupo", float(np.mean(cv_f1_macro_grupo)))
             mlflow.log_metric("cv_mean_f1_macro_caja", float(np.mean(cv_f1_macro_caja)))
 

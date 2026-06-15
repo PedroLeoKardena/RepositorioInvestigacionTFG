@@ -2,12 +2,13 @@ import os
 from tune_base_pipeline import BaseTransformerPipeline, Wav2Vec2MultiTask
 from transformers import Wav2Vec2FeatureExtractor
 
-LR = 3e-5
+LR = 1e-5
 BATCH_SIZE = 4
-GRAD_STEPS = 2
-EPOCHS = 5
+GRAD_STEPS = 8
+EPOCHS = 8
 WEIGHT_DECAY = 0.01
 WARMUP_STEPS = 100
+
 
 class Wav2Vec2AugmentedDiarizadoPipeline(BaseTransformerPipeline):
     @property
