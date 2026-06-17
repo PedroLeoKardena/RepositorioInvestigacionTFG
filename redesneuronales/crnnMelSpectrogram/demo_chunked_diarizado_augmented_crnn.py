@@ -141,12 +141,14 @@ cv_std_loss = 0.17492375726904083
 cv_mean_val_f1_grupo = 0.3244227273187449
 cv_mean_val_f1_caja = 0.26337580099882024
 
+Este será utilizado para caja.
+
 """
 
 #Hiperparámetros
 HIDDEN_SIZE = 128
 BATCH_SIZE = 32
-NUM_LAYERS_LSTM = 3
+NUM_LAYERS_LSTM = 2
 ALPHA_LEAKY_RELU = 0.0
 IS_BIDIRECTIONAL = True
 DROPOUT = 0.3

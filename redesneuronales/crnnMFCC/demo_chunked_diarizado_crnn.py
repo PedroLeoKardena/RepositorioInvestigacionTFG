@@ -159,12 +159,15 @@ cv_mean_loss = 1.9648182272911072
 cv_std_loss = 0.3030990735271277
 cv_mean_val_f1_grupo = 0.3476013096052434
 cv_mean_val_f1_caja = 0.2689190130085076
+
+
+Nos quedamos esta para grupo
 """
 
 HIDDEN_SIZE = 256
 BATCH_SIZE = 64
 NUM_LAYERS_LSTM = 2
-ALPHA_LEAKY_RELU = 0.025
+ALPHA_LEAKY_RELU = 0.0
 IS_BIDIRECTIONAL = True
 DROPOUT = 0.15
 NUM_EPOCHS = 25

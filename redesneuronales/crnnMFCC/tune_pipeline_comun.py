@@ -141,6 +141,8 @@ class PipelineComunCRNN(ABC):
                 real_bin = np.hstack((1 - real_bin, real_bin))
 
             for j, clase in enumerate(clases):
+                if real_bin[:, j].sum() == 0:
+                    continue
                 fpr, tpr, _ = roc_curve(real_bin[:, j], probs[:, j])
                 roc_auc = auc(fpr, tpr)
                 ax.plot(fpr, tpr, lw=2, label=f'{clase} (AUC = {roc_auc:.2f})')
@@ -158,7 +160,7 @@ class PipelineComunCRNN(ABC):
         mlflow.log_figure(fig, nombre_archivo_fig)
         plt.close(fig)
 
-    def ejecutar(self, modo_tuning = True):
+    def ejecutar(self, modo_tuning = False):
         
         ruta_resultados = self.ruta_base / "resultados"
         ruta_mlruns = ruta_resultados / "mlruns"
@@ -189,7 +191,10 @@ class PipelineComunCRNN(ABC):
         criterio_grupo = nn.CrossEntropyLoss()
         criterio_caja = nn.CrossEntropyLoss()
 
-        nombre_run = f"CRNN_MFCC_{self.nombre_dataset}_hidden{self.hidden_size}"
+        if modo_tuning:
+            nombre_run = f"CRNN_MFCC_{self.nombre_dataset}_hidden{self.hidden_size}"
+        else:
+            nombre_run = f"CRNN_MFCC_{self.nombre_dataset}_hidden{self.hidden_size}_TESTING_FINAL"
 
         cv_val_losses = []
         cv_val_f1_grupo = []
@@ -418,8 +423,8 @@ class PipelineComunCRNN(ABC):
             reporte_caja_dict = classification_report(etiquetas_caja, preds_caja, labels=labels_caja, target_names=le_caja.classes_, zero_division=0, output_dict=True)
             print(reporte_caja_str)
 
-            auc_grupo = roc_auc_score(etiquetas_grupo, probs_grupo_arr, multi_class='ovr', average='macro')
-            auc_caja = roc_auc_score(etiquetas_caja, probs_caja_arr, multi_class='ovr', average='macro')
+            auc_grupo = roc_auc_score(etiquetas_grupo, probs_grupo_arr, multi_class='ovr', average='macro', labels=labels_grupo)
+            auc_caja = roc_auc_score(etiquetas_caja, probs_caja_arr, multi_class='ovr', average='macro', labels=labels_caja)
 
             mlflow.log_metric("test_acc_grupo", reporte_grupo_dict["accuracy"])
             mlflow.log_metric("test_f1_macro_grupo", reporte_grupo_dict["macro avg"]["f1-score"])

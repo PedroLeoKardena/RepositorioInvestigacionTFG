@@ -152,6 +152,9 @@ cv_mean_val_f1_caja = 0.3055628219497569
 cv_mean_val_loss = 2.071359636140248
 cv_mean_std_loss = 0.2946508781956708
 
+
+Elegimos esta para caja
+
 -----------------------------Para grupo:------------------------------------------
 HIDDEN_SIZE = 128
 BATCH_SIZE = 32
@@ -267,7 +270,7 @@ cv_mean_val_f1_grupo = 0.3355031666923745
 HIDDEN_SIZE = 256
 BATCH_SIZE = 64
 NUM_LAYERS_LSTM = 2
-ALPHA_LEAKY_RELU = 0.025
+ALPHA_LEAKY_RELU = 0.0
 IS_BIDIRECTIONAL = True
 DROPOUT = 0.15
 NUM_EPOCHS = 25
