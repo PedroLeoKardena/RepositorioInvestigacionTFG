@@ -7,6 +7,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import gc
+import random
 
 if torch.cuda.is_available():
     os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
@@ -21,6 +22,8 @@ from sklearn.preprocessing import LabelEncoder, label_binarize
 from sklearn.metrics import classification_report, confusion_matrix, f1_score, roc_auc_score, roc_curve, auc
 from sklearn.metrics import classification_report
 from datasets import Dataset
+
+SEED = 42
 from torch.utils.data import DataLoader
 from transformers import (
     AutoFeatureExtractor,
@@ -195,7 +198,17 @@ class BaseTransformerPipeline(ABC):
             torch.cuda.synchronize()
         elif torch.backends.mps.is_available():
             torch.mps.empty_cache()
-    
+
+    @staticmethod
+    def set_seed(seed):
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
     def preprocesar_batch(self, batch, ruta_audios, feature_extractor):
         audio_arrays = []
         for nombre_archivo in batch["nombre_archivo"]:
@@ -289,6 +302,8 @@ class BaseTransformerPipeline(ABC):
                 real_bin = np.hstack((1 - real_bin, real_bin))
 
             for j, clase in enumerate(clases):
+                if real_bin[:, j].sum() == 0:
+                    continue
                 fpr, tpr, _ = roc_curve(real_bin[:, j], probs[:, j])
                 roc_auc = auc(fpr, tpr)
                 ax.plot(fpr, tpr, lw=2, label=f'{clase} (AUC = {roc_auc:.2f})')
@@ -376,6 +391,7 @@ class BaseTransformerPipeline(ABC):
 
         
 
+        self.set_seed(SEED)
         device = self.get_device()
         use_bf16 = device.type == 'cuda' and torch.cuda.is_bf16_supported()
         use_fp16 = device.type == 'mps'
@@ -407,6 +423,7 @@ class BaseTransformerPipeline(ABC):
                 train_fold_ds = train_fold_ds.remove_columns(['fold'])
                 val_fold_ds = val_fold_ds.remove_columns(['fold'])
 
+                self.set_seed(SEED + fold_val)
                 modelo_cv = self.get_multitask_model(num_labels_grupo, num_labels_caja)
 
                 output_dir_cv = str(ruta_modelos / f"{self.nombre_modelo_guardado}_fold_{fold_val}")
@@ -426,6 +443,7 @@ class BaseTransformerPipeline(ABC):
                     remove_unused_columns=False,
                     bf16=use_bf16,
                     fp16=use_fp16,
+                    seed=SEED + fold_val,
                 )
 
                 trainer_cv = MultiTaskTrainer(
@@ -488,9 +506,10 @@ class BaseTransformerPipeline(ABC):
             print("Iniciando Entrenamiento Final del Modelo con TODOS los datos de Train...")
             train_final_ds = train_dataset.remove_columns(['fold'])
 
+            self.set_seed(SEED)
             modelo_final = self.get_multitask_model(num_labels_grupo, num_labels_caja)
             output_dir_final = str(ruta_modelos / f"entrenamiento_final_{self.nombre_modelo_guardado}")
-            
+
             training_args_final = TrainingArguments(
                 output_dir=output_dir_final,
                 eval_strategy="no",
@@ -506,6 +525,7 @@ class BaseTransformerPipeline(ABC):
                 remove_unused_columns=False,
                 bf16=use_bf16,
                 fp16=use_fp16,
+                seed=SEED,
             )
 
             trainer_final = MultiTaskTrainer(
@@ -548,8 +568,19 @@ class BaseTransformerPipeline(ABC):
             )
             print(reporte_caja_str)
 
-            auc_grupo = roc_auc_score(real_grupo_list, probs_grupo_arr, multi_class='ovr', average='macro')
-            auc_caja = roc_auc_score(real_caja_list, probs_caja_arr, multi_class='ovr', average='macro')
+            clases_presentes_grupo = np.unique(np.array(real_grupo_list))
+            clases_presentes_caja = np.unique(np.array(real_caja_list))
+            probs_grupo_filtradas = probs_grupo_arr[:, clases_presentes_grupo]
+            probs_grupo_filtradas = probs_grupo_filtradas / probs_grupo_filtradas.sum(axis=1, keepdims=True)
+            probs_caja_filtradas = probs_caja_arr[:, clases_presentes_caja]
+            probs_caja_filtradas = probs_caja_filtradas / probs_caja_filtradas.sum(axis=1, keepdims=True)
+            try:
+                auc_grupo = roc_auc_score(real_grupo_list, probs_grupo_filtradas, multi_class='ovr', average='macro', labels=clases_presentes_grupo)
+                auc_caja = roc_auc_score(real_caja_list, probs_caja_filtradas, multi_class='ovr', average='macro', labels=clases_presentes_caja)
+            except Exception as e:
+                print(f"[WARN] No se pudo calcular AUC-ROC: {e}")
+                auc_grupo = float('nan')
+                auc_caja = float('nan')
 
             # Registrar en MLflow (Hold-out Validation)
             mlflow.log_metric("test_acc_grupo", reporte_grupo_dict["accuracy"])
