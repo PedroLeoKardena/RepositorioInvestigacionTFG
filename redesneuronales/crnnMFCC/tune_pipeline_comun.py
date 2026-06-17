@@ -6,6 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import gc
+import random
 
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -22,6 +23,8 @@ from sklearn.metrics import classification_report, confusion_matrix, f1_score, r
 
 
 from modelo_crnn import CRNN
+
+SEED = 42
 
 class DatasetMFCC(Dataset):
     def __init__(self, df):
@@ -84,6 +87,16 @@ class PipelineComunCRNN(ABC):
             torch.cuda.empty_cache()
         elif torch.backends.mps.is_available():
             torch.mps.empty_cache()
+
+    @staticmethod
+    def set_seed(seed):
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
 
     def obtener_datasets(self):
         ruta_datos = self.ruta_base / "datos_entrenamiento"
@@ -167,6 +180,7 @@ class PipelineComunCRNN(ABC):
         ruta_db = ruta_resultados / "resultados_voces.db"
         os.makedirs(ruta_resultados, exist_ok=True)
 
+        self.set_seed(SEED)
         device = self.get_device()
         print(f"Dispositivo detectado: {device}")
 
@@ -217,6 +231,7 @@ class PipelineComunCRNN(ABC):
                 df_train_fold = train_dataset[train_dataset['fold'] != fold_val]
                 df_val_fold = train_dataset[train_dataset['fold'] == fold_val]
 
+                self.set_seed(SEED + fold_val)
                 train_loader = DataLoader(DatasetMFCC(df_train_fold), batch_size=self.batch_size, shuffle=True)
                 val_loader = DataLoader(DatasetMFCC(df_val_fold), batch_size=self.batch_size, shuffle=False)
 
@@ -343,6 +358,7 @@ class PipelineComunCRNN(ABC):
             train_final_loader = DataLoader(DatasetMFCC(train_final_ds), batch_size=self.batch_size, shuffle=True)
             test_loader = DataLoader(DatasetMFCC(test_dataset), batch_size=self.batch_size, shuffle=False)
 
+            self.set_seed(SEED)
             modelo_final = CRNN(num_features=30, num_time_steps=1000, hidden_size=self.hidden_size, num_capas_ocultas_lstm=self.num_capas_ocultas_lstm, alpha_leaky_relu=self.alpha_leaky_relu, is_bidirectional=self.is_bidirectional, dropout=self.dropout)
             modelo_final.to(device)
             optimizador_final = torch.optim.Adam(modelo_final.parameters(), lr=self.lr_adam)
@@ -423,14 +439,24 @@ class PipelineComunCRNN(ABC):
             reporte_caja_dict = classification_report(etiquetas_caja, preds_caja, labels=labels_caja, target_names=le_caja.classes_, zero_division=0, output_dict=True)
             print(reporte_caja_str)
 
-            auc_grupo = roc_auc_score(etiquetas_grupo, probs_grupo_arr, multi_class='ovr', average='macro', labels=labels_grupo)
-            auc_caja = roc_auc_score(etiquetas_caja, probs_caja_arr, multi_class='ovr', average='macro', labels=labels_caja)
+            clases_presentes_grupo = np.unique(etiquetas_grupo)
+            clases_presentes_caja = np.unique(etiquetas_caja)
+            probs_grupo_filtradas = probs_grupo_arr[:, clases_presentes_grupo]
+            probs_grupo_filtradas = probs_grupo_filtradas / probs_grupo_filtradas.sum(axis=1, keepdims=True)
+            probs_caja_filtradas = probs_caja_arr[:, clases_presentes_caja]
+            probs_caja_filtradas = probs_caja_filtradas / probs_caja_filtradas.sum(axis=1, keepdims=True)
+            try:
+                auc_grupo = roc_auc_score(etiquetas_grupo, probs_grupo_filtradas, multi_class='ovr', average='macro', labels=clases_presentes_grupo)
+                auc_caja = roc_auc_score(etiquetas_caja, probs_caja_filtradas, multi_class='ovr', average='macro', labels=clases_presentes_caja)
+            except Exception as e:
+                print(f"[WARN] No se pudo calcular AUC-ROC: {e}")
+                auc_grupo = float('nan')
+                auc_caja = float('nan')
 
             mlflow.log_metric("test_acc_grupo", reporte_grupo_dict["accuracy"])
             mlflow.log_metric("test_f1_macro_grupo", reporte_grupo_dict["macro avg"]["f1-score"])
             mlflow.log_metric("test_f1_weighted_grupo", reporte_grupo_dict["weighted avg"]["f1-score"])
             mlflow.log_metric("test_auc_roc_grupo", auc_grupo)
-
 
             mlflow.log_metric("test_acc_caja", reporte_caja_dict["accuracy"])
             mlflow.log_metric("test_f1_macro_caja", reporte_caja_dict["macro avg"]["f1-score"])
