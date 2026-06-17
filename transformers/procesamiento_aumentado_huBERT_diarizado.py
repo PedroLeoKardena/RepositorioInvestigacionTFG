@@ -77,12 +77,12 @@ Vamos a dejar dichos hiperparámetros.
 #Vamos a probar a bajar el valor de learning_rate a 3e-05, aumentamos valor de epochs. Dejamos mismo numero de wamup_steps.
 #Siguiente puede ser probar a aumentar weitght_decay a 0.05 o warmup_steps a 250.
 
-LR = 3e-5
+LR = 5e-5
 BATCH_SIZE = 4
-GRAD_STEPS = 2
-EPOCHS = 5
-WEIGHT_DECAY = 0.01
-WARMUP_STEPS = 100
+GRAD_STEPS = 8
+EPOCHS = 8
+WEIGHT_DECAY = 0.05
+WARMUP_STEPS = 250
 
 class HubertAugmentedDiarizadoPipeline(BaseTransformerPipeline):
     @property
