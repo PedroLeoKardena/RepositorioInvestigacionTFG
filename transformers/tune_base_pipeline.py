@@ -321,7 +321,7 @@ class BaseTransformerPipeline(ABC):
         mlflow.log_figure(fig, nombre_archivo_fig)
         plt.close(fig)
     
-    def ejecutar(self, modo_tuning=True):
+    def ejecutar(self, modo_tuning=False):
         ruta_base = Path(__file__).resolve().parent.parent
         ruta_resultados = ruta_base / "resultados"
         ruta_db = ruta_resultados / "resultados_voces.db"

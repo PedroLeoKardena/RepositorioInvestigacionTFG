@@ -3,48 +3,71 @@ from tune_base_pipeline import BaseTransformerPipeline, Wav2Vec2MultiTask
 from transformers import Wav2Vec2FeatureExtractor
 
 """
-Hiperparámetros grupo: f1 = 0.752896174863388
-learning_rate 5e-05
-batch_size 4
-gradient_acc_steps 4
-num_epochs 8
-weight_decay 0.01
-warmup_steps 100
+Mejor config inicial:
+LR = 3e-5
+BATCH_SIZE = 4
+GRAD_STEPS = 2
+EPOCHS = 5
+WEIGHT_DECAY = 0.01
+WARMUP_STEPS = 100
 
-Post-Tuneo f1 = 0.752896174863388. Resultado identico.
+run_id = 53fc98acfd7d416d9f74dbff432cbb55
+cv_mean_f1_grupo = 0.32558649198144013
+cv_mean_f1_caja = 0.21170940494848298
 
-learning_rate 3e-05
-batch_size 4
-gradient_acc_steps 4
-num_epochs 8
-weight_decay 0.01
-warmup_steps 100
 
-Vamos a probar a solo subir los warmup_steps.
+Vamos a probar a aumentar los grad_steps a 4 y los epochs a 8.
 
-Post-Tuneo 2: 0.752896174863388. Idéntico:
-learning_rate 3e-05
-batch_size 4
-gradient_acc_steps 4
-num_epochs 8
-weight_decay 0.01
-warmup_steps 250
+LR = 3e-5
+BATCH_SIZE = 4
+GRAD_STEPS = 4
+EPOCHS = 8
+WEIGHT_DECAY = 0.01
+WARMUP_STEPS = 100
 
-En este caso, a probar a bajar el learning_rate a 2e-05. 
+run_id = be69a3789105482fb7f15e124aba26c5
+cv_mean_f1_grupo = 0.3310298984522817
+cv_mean_f1_caja = 0.17483199667211732
 
-Post-Tuneo 3: 0.752896174863388. Idéntico.
+Empeora bastante en caja. Vamos a probar con mas grad_steps y mas warump steps.
 
-No vamos a tunear más este modelo, ya que no parece que los cambios en los hiperparámetros estén afectando al resultado.
+LR = 3e-5
+BATCH_SIZE = 4
+GRAD_STEPS = 4
+EPOCHS = 5
+WEIGHT_DECAY = 0.01
+WARMUP_STEPS = 250
+
+run_id = f7273537d9f144e8ae1216b06ba6283a
+cv_mean_f1_grupo = 0.2784848197879978
+cv_mean_f1_caja = 0.16116990366695716
+
+Empeoran ambos. Vamos a dejar esta configuración como la final entonces:
+
+CONFIGURACIÓN FINAL:
+LR = 3e-5
+BATCH_SIZE = 4
+GRAD_STEPS = 2
+EPOCHS = 5
+WEIGHT_DECAY = 0.01
+WARMUP_STEPS = 100
+
+run_id = 53fc98acfd7d416d9f74dbff432cbb55
+cv_mean_f1_grupo = 0.32558649198144013
+cv_mean_f1_caja = 0.21170940494848298
+
+Lanzamos este para grupo
 """
 
 
 #Bajamos el valor de LR y dejamos los demas ugual. A la siguiente probar a aumentar numero de epochs y numero warmup_steps.
-LR = 1e-5
+LR = 3e-5
 BATCH_SIZE = 4
-GRAD_STEPS = 8
-EPOCHS = 8
+GRAD_STEPS = 2
+EPOCHS = 5
 WEIGHT_DECAY = 0.01
 WARMUP_STEPS = 100
+
 
 class Wav2Vec2DiarizadoPipeline(BaseTransformerPipeline):
     @property
