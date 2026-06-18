@@ -2,82 +2,33 @@ import os
 from tune_base_pipeline import BaseTransformerPipeline, HubertMultiTask
 
 """
-Hiperparámtros grupo:
-test_f1_grupo 0.752896174863388
-test_recall_grupo 0.83
-test_precision_grupo 0.6889
+LR = 5e-5
+BATCH_SIZE = 4
+GRAD_STEPS = 8
+EPOCHS = 8
+WEIGHT_DECAY = 0.05
+WARMUP_STEPS = 250
 
-learning_rate 5e-05
-batch_size 4
-gradient_acc_steps 4
-num_epochs 8
-weight_decay 0.01
-warmup_steps 100
+run_id = ac04c0df37844e16b3b77c629dd848db
+cv_mean_f1_grupo = 0.1582361814157496
+cv_mean_f1_caja = 0.08404578515298261 
 
-Post-Tuneo: f1 = 0.5999156536839494. Ha empeorado.
+Vamos a probar a bajar el lr y dejar todo lo demas igual:
 
-learning_rate 3e-05
-batch_size 4
-gradient_acc_steps 4
-num_epochs 10
-weight_decay 0.01
-warmup_steps 100
+LR = 3e-5
+BATCH_SIZE = 4
+GRAD_STEPS = 8
+EPOCHS = 8
+WEIGHT_DECAY = 0.05
+WARMUP_STEPS = 250
 
-#Ahora vamos a probar con 8 epochs como antes, LR de 3e-05 y mas warmup_steps.
-
-Post-Tuneo 2: f1 = 0.748097972972973. Mejora con respecto al anterior pero es peor con respecto al anterior:
-learning_rate 3e-05
-batch_size 4
-gradient_acc_steps 4
-num_epochs 8
-weight_decay 0.01
-warmup_steps 250
-
-Vamos a probar con el LR de 5e-05 y el resto lo mismo que el post-tuneo 2.
-
-Post-Tuneo 3: f1 = 0.7122128378378378. Ha empeorado.
-learning_rate 5e-05
-batch_size 4
-gradient_acc_steps 4
-num_epochs 8
-weight_decay 0.01
-warmup_steps 250
-
-Vamos a probar a bajar el LR a 1e-05
-
-Post-Tuneo 4: f1 = 0.607313994090787. Ha empeorado bastante tras probar un LR de 1e-05.
-learning_rate 1e-05
-batch_size 4
-gradient_acc_steps 4
-num_epochs 8
-weight_decay 0.01
-warmup_steps 250
-
-Tenemos que dejar el LR a 3e-05. Vamos a probar a aumentar el numero de warmup_steps a 500.
-
-Post-Tuneo 5: f1 = 0.7031138628813047. Sigue siendo peor que el post-tuneo 2.
-learning_rate 3e-05
-batch_size 4
-gradient_acc_steps 4
-num_epochs 8
-weight_decay 0.01
-warmup_steps 500
-
-Creemos que el mejor resultado es el tuneo original: f1 = 0.752896174863388
-learning_rate 5e-05
-batch_size 4
-gradient_acc_steps 4
-num_epochs 8
-weight_decay 0.01
-warmup_steps 100
-
-Vamos a dejar dichos hiperparámetros.
+Resultados malos.
 """
 
 #Vamos a probar a bajar el valor de learning_rate a 3e-05, aumentamos valor de epochs. Dejamos mismo numero de wamup_steps.
 #Siguiente puede ser probar a aumentar weitght_decay a 0.05 o warmup_steps a 250.
 
-LR = 5e-5
+LR = 3e-5
 BATCH_SIZE = 4
 GRAD_STEPS = 8
 EPOCHS = 8
