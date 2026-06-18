@@ -47,7 +47,7 @@ cv_mean_caja_f1 = 0.24573444512649084
 """
 
 
-LR = 3e-5
+LR = 5e-5
 BATCH_SIZE = 4
 GRAD_STEPS = 8
 EPOCHS = 8

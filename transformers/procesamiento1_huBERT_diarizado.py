@@ -54,6 +54,7 @@ WEIGHT_DECAY = 0.05
 WARMUP_STEPS = 250
 
 
+
 class HubertDiarizadoPipeline(BaseTransformerPipeline):
     @property
     def max_audio_length(self): return 160000
